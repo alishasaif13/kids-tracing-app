@@ -21,13 +21,13 @@ export default function Categories() {
   };
 
   return (
-    // Main Container: Blue Violet Gradient Background
-    <div className="min-h-screen bg-gradient-to-br from-indigo-700 to-violet-800 p-8">
+    // Main Container: Soft Pastel Gradient Background
+    <div className="min-h-screen bg-gradient-to-br from-[#d3c8ff] via-[#d8f3ff] to-[#e8e1ff] p-8">
       <header className="text-center mb-10">
-        <h1 className="text-5xl font-extrabold text-white tracking-tight drop-shadow-md">
+        <h1 className="text-5xl font-extrabold text-indigo-900 tracking-tight drop-shadow-md">
           Select a Tracing Mode
         </h1>
-        <p className="text-xl text-cyan-300 mt-2">
+        <p className="text-xl text-violet-700 mt-2">
           Start with Alphabets, Numbers coming soon!
         </p>
       </header>
@@ -45,11 +45,11 @@ export default function Categories() {
         ))}
       </div>
 
-      {/* Back Button */}
+      {/* Back Button (Only at the bottom) */}
       <div className="text-center mt-12">
          <button
             onClick={() => navigate("/")}
-            className="px-6 py-3 bg-indigo-500 text-white rounded-lg shadow-md hover:bg-indigo-600 transition font-medium"
+            className="px-6 py-3 bg-violet-600 text-white rounded-lg shadow-md hover:bg-violet-700 transition font-medium"
           >
             ← Back to Home
           </button>

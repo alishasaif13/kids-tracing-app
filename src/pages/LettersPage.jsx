@@ -1,8 +1,6 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import AlphabetCard from '../components/AlphabetsCard'; 
 
-// Helper function to generate A-Z array
 const generateAlphabet = () => {
   return Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i));
 };
@@ -10,12 +8,6 @@ const generateAlphabet = () => {
 export default function LettersPage() {
   const navigate = useNavigate();
   const alphabet = generateAlphabet();
-  
-  // Dummy completion logic
-  const isLetterCompleted = (letter) => {
-    return ['A', 'E', 'I'].includes(letter);
-  };
-
   const handleLetterClick = (letter) => {
     navigate(`/trace/${letter.toLowerCase()}`);
   };
@@ -33,13 +25,13 @@ export default function LettersPage() {
       </header>
 
       {/* Grid Layout for Alphabet Cards */}
-      <div className="flex flex-wrap justify-center gap-4 max-w-6xl mx-auto">
+      <div className="flex flex-wrap justify-center gap-2 max-w-7xl mx-auto">
         {alphabet.map((letter) => (
           <AlphabetCard
             key={letter}
             letter={letter}
             onClick={() => handleLetterClick(letter)}
-            isCompleted={isLetterCompleted(letter)}
+           
           />
         ))}
       </div>

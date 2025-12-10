@@ -9,12 +9,10 @@ export default function TracePage() {
   const [isDrawing, setIsDrawing] = useState(false);
   const [points, setPoints] = useState([]);
 
-  // --- Drawing Logic (Unchanged) ---
+  // --- Drawing Logic ---
   useEffect(() => {
     drawDottedLetter();
   }, [letter]);
-  
-  // getPosition, startDrawing, stopDrawing, draw functions... (same as before)
 
   const getPosition = (e) => {
     const rect = canvasRef.current.getBoundingClientRect();
@@ -39,7 +37,7 @@ export default function TracePage() {
     const ctx = canvasRef.current.getContext("2d");
     ctx.lineWidth = 10;
     ctx.lineCap = "round";
-    ctx.strokeStyle = "#4F46E5"; // Deep Indigo color for tracing line
+    ctx.strokeStyle = "#4F46E5"; 
 
     const newPos = getPosition(e);
     const newPoints = [...points, newPos];
@@ -50,7 +48,7 @@ export default function TracePage() {
     ctx.lineTo(newPos.x, newPos.y);
     ctx.stroke();
   };
-  
+
   const drawDottedLetter = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -71,62 +69,61 @@ export default function TracePage() {
   const checkDrawing = () => {
     if (points.length < 50) {
       Swal.fire({
-        title: "Too Short! 🤏",
+        title: "Too Short!",
         text: "Please try to trace the letter properly.",
         icon: "error",
         confirmButtonText: "Try Again",
       });
-      drawDottedLetter(); 
+      drawDottedLetter();
       setPoints([]);
       return;
     }
 
     Swal.fire({
-      title: "Fantastic Job! ⭐",
+      title: "Fantastic Job!",
       text: `You successfully traced '${letter.toUpperCase()}'!`,
       icon: "success",
       confirmButtonText: "Continue",
     });
   };
-  
+
   const handleClear = () => {
-      drawDottedLetter(); 
-      setPoints([]);
-      Swal.fire({
-        toast: true,
-        position: 'top-end',
-        icon: 'info',
-        title: 'Cleared!',
-        showConfirmButton: false,
-        timer: 1500
-      })
+    drawDottedLetter();
+    setPoints([]);
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      icon: 'info',
+      title: 'Cleared!',
+      showConfirmButton: false,
+      timer: 1500
+    })
   }
 
   // --- UI START (Themed) ---
 
   return (
-    // Calmer Blue Violet Gradient Background for focus
-    <div className="min-h-screen bg-gradient-to-br from-indigo-600 to-violet-700 p-4 sm:p-8 flex flex-col items-center">
+    // Background: Deep Indigo/Violet for better focus contrast
+    <div className="min-h-screen  bg-gradient-to-br from-[#d3c8ff] via-[#d8f3ff] to-[#e8e1ff]  p-4 sm:p-8 flex flex-col items-center">
       
-      {/* Header/Title Block */}
       <header className="text-center mb-8">
-        <h1 className="text-6xl font-extrabold text-white tracking-wider drop-shadow-lg">
+        <h1 className="text-6xl font-extrabold text-indigo-900 tracking-wider drop-shadow-lg">
           Trace the Letter 
-          <span className="text-cyan-300 ml-3">
+          <span className="text-cyan-400 ml-3">
              {letter.toUpperCase()}!
           </span>
         </h1>
-        <p className="text-xl text-white opacity-80 mt-2">
+        <p className="text-xl text-violet-700 opacity-80 mt-2">
           Use your finger or mouse to follow the dots.
         </p>
       </header>
       
-      {/* Main Canvas Area: Warm White Canvas */}
+      {/* Canvas Area: Warm White Canvas with Soft Cyan Border */}
       <div className="relative bg-white shadow-3xl rounded-3xl overflow-hidden border-8 border-cyan-400">
           <canvas
             ref={canvasRef}
-            width={500}
-            height={500}
+            width={350}
+            height={300}
             className="touch-none"
             onMouseDown={startDrawing}
             onMouseUp={stopDrawing}
@@ -141,22 +138,22 @@ export default function TracePage() {
       {/* Control Buttons */}
       <div className="flex flex-wrap justify-center gap-4 mt-8 w-full max-w-lg">
         
-        {/* Clear Button */}
+        {/* Clear Button (Emoji Removed) */}
         <button
           onClick={handleClear}
           className="flex-1 px-6 py-3 bg-red-500 text-white font-bold rounded-xl shadow-lg 
                      hover:bg-red-600 transition duration-300 transform hover:scale-105"
         >
-          🧹 Clear
+          Clear
         </button>
 
-        {/* Check Button: Soft Cyan Accent */}
+        {/* Check Button: Soft Cyan Accent (Emoji Removed) */}
         <button
           onClick={checkDrawing}
           className="flex-1 px-6 py-3 bg-cyan-400 text-indigo-900 font-bold rounded-xl shadow-lg 
                      hover:bg-cyan-300 transition duration-300 transform hover:scale-105"
         >
-          ✅ Check My Trace
+          Check My Trace
         </button>
       </div>
 
