@@ -1,40 +1,46 @@
 import React from 'react';
 
-// Card for individual alphabet letters
 export default function AlphabetCard({ letter, onClick, isCompleted }) {
-  // Determine color based on the letter for visual variety (Deep/Vibrant Tones)
+  // Safety check: Agar letter na ho to crash na kare
+  if (!letter) return null;
+
   const colors = [
-    'bg-indigo-500', 
-    'bg-teal-500', 
-    'bg-pink-500', 
-    'bg-amber-500', 
-    'bg-purple-500'
+    'from-emerald-500 to-emerald-700', 
+    'from-orange-500 to-red-600', 
+    'from-pink-500 to-rose-700', 
+    'from-fuchsia-600 to-purple-800',
+    'from-blue-600 to-indigo-800'
   ];
-  const colorClass = colors[letter.charCodeAt(0) % colors.length];
   
-  // Style for completion status (Cyan accent)
-  const completionClass = isCompleted 
-    ? 'border-4 border-cyan-400 shadow-inner' 
-    : 'border-2 border-gray-200';
+  // charCodeAt safety logic
+  const charCode = typeof letter === 'string' ? letter.charCodeAt(0) : 0;
+  const colorIndex = charCode % colors.length;
+  const colorClass = colors[colorIndex];
+
+  // Dynamic text size for symmetry
+  const textSize = letter.length > 2 ? 'text-lg md:text-xl' : 'text-4xl md:text-6xl';
 
   return (
     <div
       onClick={onClick}
-      className={`relative w-22 h-32 md:w-40 md:h-40 flex flex-col items-center justify-center 
-                  ${colorClass} text-white rounded-2xl shadow-xl m-2 
-                  transform transition-all duration-300 ease-in-out 
-                  hover:scale-105 hover:shadow-2xl active:scale-95 cursor-pointer ${completionClass}`}
+      className={`group relative aspect-[4/5] flex flex-col items-center justify-center 
+                  bg-gradient-to-br ${colorClass} text-white rounded-[2rem] shadow-lg
+                  transform transition-all duration-300 ease-out 
+                  hover:-translate-y-2 hover:shadow-xl active:scale-95 cursor-pointer 
+                  border-t-2 border-t-white/30 
+                  border-b-8 border-b-black/20 p-2`}
     >
-      
-      <span className="text-5xl md:text-8xl font-black drop-shadow-md">
+      <span className={`${textSize} font-black drop-shadow-lg uppercase text-center break-words w-full`}>
         {letter}
       </span>
       
       {isCompleted && (
-        <span className="absolute top-2 right-2 text-3xl" role="img" aria-label="Completed">
+        <span className="absolute -top-2 -right-2 bg-yellow-400 rounded-full p-1 border-2 border-white text-xs">
           ⭐
         </span>
       )}
+
+      <div className="absolute bottom-3 w-8 h-1 bg-black/20 rounded-full group-hover:w-12 transition-all" />
     </div>
   );
 }

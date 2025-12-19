@@ -1,50 +1,41 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import TracingCard from '../components/TracingCard';
+import AlphabetCard from '../components/AlphabetsCard'; // Ensure 's' is there
 import { TRACING_ITEMS } from '../data/TracingData';
 import NavBar from '../components/Navbar';
 
 export default function LettersPage() {
     const navigate = useNavigate();
     const categoryId = 'letters';
-    const items = TRACING_ITEMS[categoryId].items; 
-
-    const handleItemClick = (item) => {
-        // Navigate to the correct, modern trace path: /trace/letters/a
-        navigate(`/trace/${categoryId}/${item.toLowerCase()}`);
-    };
+    const items = TRACING_ITEMS[categoryId]?.items || []; 
 
     return (
-        <div className="min-h-screen relative bg-gradient-to-br from-indigo-100 to-cyan-50 p-6">
-            <NavBar themeColor="text-indigo-800" />
+        <div className="min-h-screen flex flex-col items-center bg-gradient-to-br from-indigo-200 via-cyan-100 to-purple-200 p-4 md:p-8">
+            <NavBar themeColor="text-indigo-900" />
             
-            {/* pt-20 added to make space for fixed NavBar */}
-            <div className="pt-5"> 
-                <header className="text-center py-4 mb-10">
-                    <h1 className="text-5xl md:text-5xl font-extrabold text-indigo-800 tracking-tight drop-shadow-md">
-                        Trace the Alphabets
-                    </h1>
-                    <p className="text-xl text-indigo-600 mt-5">
-                        Click on a letter to start tracing.
-                    </p>
-                </header>
-                
-                {/* Item List Container */}
-                <div className="flex flex-wrap justify-center gap-2 max-w-7xl mx-auto">
+            <header className="text-center mt-5 mb-8">
+                <h1 className="text-4xl md:text-6xl font-extrabold text-indigo-900 tracking-tight drop-shadow-md">
+                    Trace Alphabets
+                </h1>
+                <p className="text-lg text-indigo-700 font-medium mt-2">
+                    Pick a letter to start tracing!
+                </p>
+            </header>
+            
+            {/* FIX: Yahan border conflict khatam kar ke sirf aik clean border rakha hai */}
+            <div className="bg-white/30 backdrop-blur-xl p-6 md:p-10 rounded-[40px] shadow-2xl max-w-6xl w-full border border-white/40 mb-10">
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
                     {items.map((item) => (
-                        <TracingCard
+                        <AlphabetCard
                             key={item}
-                            item={item} 
-                            onClick={() => handleItemClick(item)}
-                          
+                            letter={item} 
+                            onClick={() => navigate(`/trace/letters/${item}`)}
                         />
                     ))}
                 </div>
             </div>
-            
-            {/* The previous Back to Categories button is removed, 
-                as NavBar already provides a Back button. */}
-            
+
+         
         </div>
     );
 }

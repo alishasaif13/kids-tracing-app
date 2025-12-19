@@ -1,39 +1,32 @@
-// src/data/TracingData.js
-
 const generateRange = (start, end) => 
     Array.from({ length: end - start + 1 }, (_, i) => String(start + i));
-
-// --- Huroof-e-Tahajji ki list ---
-const URDU_ALPHABETS = [
-    'ا', 'ب', 'پ', 'ت', 'ٹ', 'ث', 'ج', 'چ', 'ح', 'خ', 
-    'د', 'ڈ', 'ذ', 'ر', 'ڑ', 'ز', 'ژ', 'س', 'ش', 'ص', 
-    'ض', 'ط', 'ظ', 'ع', 'غ', 'ف', 'ق', 'ک', 'گ', 'ل', 
-    'م', 'ن', 'و', 'ھ', 'ی', 'ے'
-];
-
 
 export const TRACING_ITEMS = {
     letters: {
         title: 'Letter',
-        items: generateRange(65, 90).map(code => String.fromCharCode(code)), // A-Z (Uppercase)
+        items: Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i)), 
         backPath: '/letters'
     },
     numbers: {
         title: 'Number',
-        items: generateRange(1, 100).map(String), // 1-100 (Strings)
+        items: generateRange(1, 20).map(String),
         backPath: '/counting'
     },
     shapes: {
         title: 'Shape',
-        items: ['Circle', 'Square', 'Triangle', 'Star', 'Diamond', 'Rectangle', 'Oval', 'Arrow'], // Naye Shapes
-        backPath: '/shapes'
+        items: ['Circle', 'Square', 'Triangle', 'Star', 'Diamond', 'Rectangle', 'Oval', 'Arrow'], 
+        backPath: '/shapes' // Shapes ka backPath bhi add kar diya
     },
     urdu: {
-        title: 'Huroof',
-        items: URDU_ALPHABETS, 
+        title: 'Huroof-e-Tahajji',
+        items: [
+            'ا', 'ب', 'ت', 'ث', 'ج', 'ح', 'خ', 'د', 'ذ', 'ر', 
+            'ز', 'س', 'ش', 'ص', 'ض', 'ط', 'ظ', 'ع', 'غ', 'ف', 
+            'ق', 'ک', 'ل', 'م', 'ن', 'و', 'ھ', 'ء', 'ی'
+        ], 
         backPath: '/urdu'
-    }
-};
+    } // urdu object close
+}; // TRACING_ITEMS close (comma missing tha yahan)
 
 export const getTracingData = (categoryId, item) => {
     const categoryData = TRACING_ITEMS[categoryId];
@@ -41,13 +34,11 @@ export const getTracingData = (categoryId, item) => {
 
     let currentItem;
     
-    // Item ko category ke mutabiq format karein
     if (categoryId === 'letters') {
         currentItem = item.toUpperCase(); 
     } else if (categoryId === 'shapes') {
         currentItem = item.charAt(0).toUpperCase() + item.slice(1).toLowerCase(); 
     } else {
-        // 'numbers' aur 'urdu' ke liye jaisa item aaya hai, waisa hi rakhein
         currentItem = item;
     }
     
@@ -56,7 +47,6 @@ export const getTracingData = (categoryId, item) => {
 
     if (currentIndex === -1) return null;
 
-    // Next aur Previous item nikalna (Circular navigation)
     const nextItem = itemsList[(currentIndex + 1) % itemsList.length];
     const prevItem = itemsList[(currentIndex - 1 + itemsList.length) % itemsList.length];
 

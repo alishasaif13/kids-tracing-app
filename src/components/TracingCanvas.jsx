@@ -1,12 +1,7 @@
-// src/components/TracingCanvas.jsx
 import React, { useRef, useState, useEffect, useCallback } from "react";
-
-
-// Note: Coordinates adjusted for a viewBox of 300x400
 const PATH_DATA = {
-  // --- LETTERS (A-Z) - Corrected and simplified ---
   A: "M85 315 L150 55 L215 315 M105 215 L195 215",
- B: "M75 55 L75 315 M75 55 L165 55 A80 85 0 0 1 165 185 L75 185 M165 185 A80 85 0 0 1 165 315 L75 315",
+  B: "M75 55 L75 315 M75 55 L165 55 A80 85 0 0 1 165 185 L75 185 M165 185 A80 85 0 0 1 165 315 L75 315",
   C: "M215 95 C215 55 165 55 135 55 C85 55 85 95 85 185 C85 275 85 315 135 315 C165 315 215 315 215 275",
   D: "M75 55 L75 315 M75 55 L135 55 C195 55 215 85 215 185 C215 285 195 315 135 315 L75 315",
   E: "M215 55 L75 55 L75 315 L215 315 M75 185 L185 185",
@@ -23,7 +18,7 @@ const PATH_DATA = {
   P: "M75 315 L75 55 L165 55 C215 55 215 155 165 155 L75 155",
   Q: "M150 55 C85 55 85 185 85 185 C85 315 150 315 150 315 C215 315 215 185 215 185 C215 55 150 55 150 55 Z M175 255 L225 315",
   R: "M75 315 L75 55 L165 55 C215 55 215 155 165 155 L75 155 M165 155 L225 315",
-S: "M205 75 C205 55 185 55 165 75 C145 95 145 155 175 175 C205 195 205 255 175 275 C145 295 105 295 105 275",
+  S: "M205 75 C205 55 185 55 165 75 C145 95 145 155 175 175 C205 195 205 255 175 275 C145 295 105 295 105 275",
 
   T: "M75 55 L225 55 M150 55 L150 315",
   U: "M75 55 L75 265 C75 315 135 315 150 315 C165 315 225 315 225 265 L225 55",
@@ -32,17 +27,17 @@ S: "M205 75 C205 55 185 55 165 75 C145 95 145 155 175 175 C205 195 205 255 175 2
   X: "M75 55 L225 315 M225 55 L75 315",
   Y: "M75 55 L150 185 L225 55 M150 185 L150 315",
   Z: "M75 55 L225 55 L75 315 L225 315",
-  
+
   // --- NUMBERS (1-20) - Corrected ---
   1: "M150 55 L150 315 M120 85 L150 55",
   2: "M85 85 C85 55 125 55 150 55 C185 55 215 75 215 105 C215 145 185 185 150 215 L85 285 L85 315 L215 315",
- 3: "M105 75 C105 55 145 50 175 60 C200 70 210 90 210 115 C210 140 195 155 175 160 L160 160 M160 160 C175 160 195 165 210 180 C225 195 225 220 225 245 C225 275 215 305 190 320 C165 335 130 335 105 320 C90 310 85 295 90 280",
+  3: "M105 75 C105 55 145 50 175 60 C200 70 210 90 210 115 C210 140 195 155 175 160 L160 160 M160 160 C175 160 195 165 210 180 C225 195 225 220 225 245 C225 275 215 305 190 320 C165 335 130 335 105 320 C90 310 85 295 90 280",
   4: "M175 55 L85 215 L215 215 M175 55 L175 290",
   5: "M215 55 L85 55 L85 155 L165 155 C215 155 215 245 165 285 C135 305 85 295 85 275",
   6: "M185 75 C175 55 115 55 95 85 C75 125 75 235 85 265 C95 295 135 305 165 285 C195 265 195 215 165 195 C135 175 105 185 95 205",
   7: "M85 55 L215 55 L125 315",
   8: "M150 55 C185 55 195 75 195 95 C195 125 175 135 150 145 C125 135 105 125 105 95 C105 75 115 55 150 55 Z M150 145 C185 155 195 175 195 205 C195 245 175 265 150 275 C125 265 105 245 105 205 C105 175 115 155 150 145 Z M150 275 C115 265 105 235 105 205 M195 205 C195 235 185 265 150 275",
- 9: "M175 185 C215 145 215 85 175 45 C135 5 85 55 85 115 C85 175 135 205 175 185 Z M175 185 L145 315",
+  9: "M175 185 C215 145 215 85 175 45 C135 5 85 55 85 115 C85 175 135 205 175 185 Z M175 185 L145 315",
   10: "M100 65 L100 250 M180 55 C220 55 230 85 230 145 C230 205 220 235 180 235 C140 235 130 205 130 145 C130 85 140 55 180 55 Z",
   11: "M100 55 L100 315 M110 85 L100 55 M200 55 L200 315 M210 85 L200 55",
   12: "M90 55 L90 315 M100 85 L90 55 M160 85 C160 55 200 55 220 65 C240 75 240 105 230 125 L170 285 L170 315 L240 315",
@@ -52,449 +47,374 @@ S: "M205 75 C205 55 185 55 165 75 C145 95 145 155 175 175 C205 195 205 255 175 2
   16: "M90 55 L90 315 M100 85 L90 55 M220 75 C210 55 170 55 150 85 C130 125 130 235 140 265 C150 295 190 305 220 285 C250 265 250 215 220 195 C190 175 160 185 150 205",
   17: "M90 55 L90 315 M100 85 L90 55 M150 55 L250 55 L180 315",
   18: "M90 55 L90 315 M100 85 L90 55 M195 55 C230 55 240 75 240 95 C240 125 220 135 195 145 C170 135 150 125 150 95 C150 75 160 55 195 55 Z M195 145 C230 155 240 175 240 205 C240 245 220 265 195 275 C170 265 150 245 150 205 C150 175 160 155 195 145 Z",
-19: "M90 55 L90 315 M100 85 L90 55 M190 185 C230 145 230 85 190 45 C150 5 100 55 100 115 C100 175 150 205 190 185 Z M190 185 L160 315",
+  19: "M90 55 L90 315 M100 85 L90 55 M190 185 C230 145 230 85 190 45 C150 5 100 55 100 115 C100 175 150 205 190 185 Z M190 185 L160 315",
 
-20: "M75 95 C75 65 115 55 135 65 C155 75 155 105 145 125 L105 295 L105 315 L165 315 M220 155 C220 225 200 255 170 255 C140 255 120 225 120 155 C120 85 140 55 170 55 C200 55 220 85 220 155 Z",
-  
-
-'ا': "M150 55 L150 315",
-
-'ب': "M70 265 L230 265 M150 305 C148 308 152 308 150 305",
-
-'پ': "M70 265 L230 265 M105 305 C103 308 107 308 105 305 M150 305 C148 308 152 308 150 305 M195 305 C193 308 197 308 195 305",
-
-'ت': "M70 265 L230 265 M120 235 C118 238 122 238 120 235 M180 235 C178 238 182 238 180 235",
-
-'ٹ': "M70 265 L230 265 M150 215 C145 215 145 225 150 225 C155 225 155 215 150 215",
-
-'ث': "M70 265 L230 265 M100 235 C98 238 102 238 100 235 M150 225 C148 228 152 228 150 225 M200 235 C198 238 202 238 200 235",
-
-'ج': "M215 120 C215 75 180 60 150 70 C120 80 120 110 120 145 L120 225 C120 270 90 290 70 265 C60 250 60 230 70 220",
-
-'چ': "M215 120 C215 75 180 60 150 70 C120 80 120 110 120 145 L120 225 C120 270 90 290 70 265 C60 250 60 230 70 220 M150 180 C148 183 152 183 150 180",
-
-'ح': "M215 130 C215 80 185 60 150 70 C115 80 110 115 110 150 L110 235 C110 280 80 300 60 275 C50 260 50 240 60 230",
-
-'خ': "M215 130 C215 80 185 60 150 70 C115 80 110 115 110 150 L110 235 C110 280 80 300 60 275 C50 260 50 240 60 230 M140 45 C138 48 142 48 140 45",
-
-'د': "M120 55 L120 155 L200 155",
-
-'ڈ': "M120 55 L120 155 L200 155 M150 30 C145 30 145 40 150 40 C155 40 155 30 150 30",
-
-'ذ': "M120 55 L120 155 L200 155 M130 175 C128 178 132 178 130 175",
-
-'ر': "M110 55 L110 245 L180 265 L180 315",
-
-'ڑ': "M110 55 L110 245 L180 265 L180 315 M145 30 C140 30 140 40 145 40 C150 40 150 30 145 30",
-
-'ز': "M110 55 L110 245 L180 265 L180 315 M120 285 C118 288 122 288 120 285",
-
-'ژ': "M110 55 L110 245 L180 265 L180 315 M100 205 C98 208 102 208 100 205 M150 205 C148 208 152 208 150 205 M200 205 C198 208 202 208 200 205",
-
-'س': "M60 280 C90 250 120 250 150 270 C180 250 210 250 240 280 L240 300 C210 320 180 320 150 300 C120 320 90 320 60 300 L60 280",
-
-'ش': "M60 280 C90 250 120 250 150 270 C180 250 210 250 240 280 L240 300 C210 320 180 320 150 300 C120 320 90 320 60 300 L60 280 M110 220 C108 223 112 223 110 220 M150 220 C148 223 152 223 150 220 M190 220 C188 223 192 223 190 220",
-
-'ص': "M70 240 C90 170 120 160 150 180 C180 160 210 170 230 240 L230 300 C200 320 170 320 150 300 C130 320 100 320 70 300 L70 240",
-
-'ض': "M70 240 C90 170 120 160 150 180 C180 160 210 170 230 240 L230 300 C200 320 170 320 150 300 C130 320 100 320 70 300 L70 240 M125 140 C123 143 127 143 125 140",
-
-'ط': "M110 75 L110 275 L230 275",
-
-'ظ': "M110 75 L110 275 L230 275 M140 50 C138 53 142 53 140 50",
-
-'ع': "M195 130 C195 80 165 60 140 70 C115 80 105 110 105 145 L105 315",
-
-'غ': "M195 130 C195 80 165 60 140 70 C115 80 105 110 105 145 L105 315 M125 45 C123 48 127 48 125 45",
-
-'ف': "M150 160 C180 160 195 185 190 210 C185 235 160 240 135 225 C120 215 115 190 125 170 C130 160 140 155 150 160 Z M150 245 L150 315 M150 140 C148 143 152 143 150 140",
-
-'ق': "M150 160 C180 160 195 185 190 210 C185 235 160 240 135 225 C120 215 115 190 125 170 C130 160 140 155 150 160 Z M150 245 L150 315 M130 140 C128 143 132 143 130 140 M170 140 C168 143 172 143 170 140",
-
-'ک': "M95 55 L95 315 M95 165 L185 165 M140 125 L195 75",
-
-'گ': "M95 55 L95 315 M95 165 L185 165 M140 125 L195 75 M215 130 C213 133 217 133 215 130",
-
-'ل': "M145 55 L145 295 C145 320 120 325 105 310",
-
-'م': "M145 115 C180 115 195 140 190 170 C185 200 165 210 145 200 L145 315",
-
-'ن': "M150 85 C200 85 220 120 220 185 C220 250 200 290 150 290 C100 290 80 250 80 185 C80 120 100 85 150 85 Z M150 185 C148 188 152 188 150 185",
-
-'و': "M150 85 C185 85 205 105 205 140 C205 175 185 195 150 195 C115 195 95 175 95 140 C95 105 115 85 150 85 Z M150 195 L150 315",
-
-'ھ': "M115 175 C145 175 160 195 160 220 C160 245 145 265 115 265 C85 265 70 245 70 220 C70 195 85 175 115 175 Z M115 175 L115 315",
-
-'ی': "M65 280 C95 240 135 220 175 240 C215 260 240 280 240 305 M105 320 C103 323 107 323 105 320 M195 320 C193 323 197 323 195 320",
-
-'ے': "M65 280 C95 240 135 220 175 240 C215 260 240 280 240 305", 
+  20: "M75 95 C75 65 115 55 135 65 C155 75 155 105 145 125 L105 295 L105 315 L165 315 M220 155 C220 225 200 255 170 255 C140 255 120 225 120 155 C120 85 140 55 170 55 C200 55 220 85 220 155 Z",
   // --- SHAPES ---
-  Circle: "M150 65 C215 65 215 305 150 305 C85 305 85 65 150 65 Z",
-  Square: "M75 75 L225 75 L225 295 L75 295 Z",
+  Circle: "M150 85 C215 85 235 135 235 185 C235 235 215 285 150 285 C85 285 65 235 65 185 C65 135 85 85 150 85 Z",
+ Square: "M75 75 L235 75 L235 235 L75 235 Z",
   Triangle: "M150 65 L225 295 L75 295 Z",
   Star: "M150 65 L170 135 L245 145 L190 195 L205 270 L150 235 L95 270 L110 195 L55 145 L130 135 Z",
   Diamond: "M150 65 L225 185 L150 305 L75 185 Z",
-  Rectangle: "M65 105 L235 105 L235 265 L65 265 Z",
-  Oval: "M150 85 C215 85 235 135 235 185 C235 235 215 285 150 285 C85 285 65 235 65 185 C65 135 85 85 150 85 Z",
+ Rectangle: "M50 100 L270 100 L270 220 L50 220 Z",
+  Oval: "M150 65 C215 65 215 305 150 305 C85 305 85 65 150 65 Z",
   Arrow: "M85 185 L215 185 M175 145 L215 185 L175 225",
-  Heart: "M150 255 C120 285 85 265 75 235 C65 205 75 175 105 165 C125 155 145 165 150 185 C155 165 175 155 195 165 C225 175 235 205 225 235 C215 265 180 285 150 255 Z",
+  Heart:
+    "M150 255 C120 285 85 265 75 235 C65 205 75 175 105 165 C125 155 145 165 150 185 C155 165 175 155 195 165 C225 175 235 205 225 235 C215 265 180 285 150 255 Z",
 };
-
 
 // --- GET PATH FUNCTION ---
 const getPathForItem = (item, categoryId) => {
-    if (!item || !categoryId) return null;
+  if (!item || !categoryId) return null;
 
-    let key;
-    if (categoryId === "letters") {
-        key = item.toUpperCase();
-    } else if (categoryId === "numbers") {
-        key = item; 
-    } else if (categoryId === 'urdu') {
-        key = item; 
-    } else if (categoryId === "shapes") {
-        // Shapes ko proper case mein convert karke key use karein
-        key = item.charAt(0).toUpperCase() + item.slice(1).toLowerCase(); 
-    } else {
-        return null;
-    }
-    // PATH_DATA se path nikalna
-    return PATH_DATA[key] || null;
+  let key;
+  if (categoryId === "letters") {
+    key = item.toUpperCase();
+  } else if (categoryId === "numbers") {
+    key = item;
+  } else if (categoryId === "shapes") {
+    // Shapes ko proper case mein convert karke key use karein
+    key = item.charAt(0).toUpperCase() + item.slice(1).toLowerCase();
+  } else {
+    return null;
+  }
+  // PATH_DATA se path nikalna
+  return PATH_DATA[key] || null;
 };
 
 // --- SOUND FUNCTIONS (No change) ---
 const playSuccessSound = () => {
-    try {
-        const audio = new Audio("/sounds/success.mp3");
-        audio.play().catch((e) => console.error("Success audio failed:", e));
-    } catch (e) {
-        console.error("Success audio API failed:", e);
-    }
+  try {
+    const audio = new Audio("/sounds/success.mp3");
+    audio.play().catch((e) => console.error("Success audio failed:", e));
+  } catch (e) {
+    console.error("Success audio API failed:", e);
+  }
 };
 
 const playFailureSound = () => {
-    try {
-        const audio = new Audio("/sounds/oops.mp3");
-        audio.play().catch((e) => console.error("Failure audio failed:", e));
-    } catch (e) {
-        console.error("Failure audio API failed:", e);
-    }
+  try {
+    const audio = new Audio("/sounds/tryagain.mp3");
+    audio.play().catch((e) => console.error("Failure audio failed:", e));
+  } catch (e) {
+    console.error("Failure audio API failed:", e);
+  }
 };
 
 // --- TRACING CANVAS COMPONENT ---
 export default function TracingCanvas({
-    width = 350,
-    height = 350,
-    item = "A",
-    categoryId = "letters",
+  width = 360,
+  height = 360,
+  item = "A",
+  categoryId = "letters",
 }) {
-    const currentPath = getPathForItem(item, categoryId);
+  const currentPath = getPathForItem(item, categoryId);
 
-    if (!currentPath) {
-        return (
-            <div
-                className="max-w-sm mx-auto p-3 bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl shadow-red-300 w-full"
-                style={{ maxWidth: `${width + 40}px` }}
-            >
-                <h2 className="text-center text-3xl font-bold mb-6 text-red-700 drop-shadow-sm">
-                    404: Tracing Path Not Found!
-                </h2>
-                <div className="text-center p-10 border-4 border-red-400 rounded-lg bg-red-50">
-                    <span className="text-9xl font-black text-red-300">
-                        {item.toUpperCase()}
-                    </span>
-                    <p className="mt-4 text-lg font-semibold text-red-600">
-                        Path data is missing for {item} in the '{categoryId}' category.
-                    </p>
-                </div>
-            </div>
-        );
+  if (!currentPath) {
+    return (
+      <div
+        className="max-w-sm mx-auto p-4 bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl shadow-red-300 w-full"
+        style={{ maxWidth: `${width + 40}px` }}
+      >
+        <h2 className="text-center text-3xl font-bold mb-6 text-red-700 drop-shadow-sm">
+          404: Tracing Path Not Found!
+        </h2>
+        <div className="text-center p-10 border-4 border-red-400 rounded-lg bg-red-50">
+          <span className="text-9xl font-black text-red-300">
+            {item.toUpperCase()}
+          </span>
+          <p className="mt-4 text-lg font-semibold text-red-600">
+            Path data is missing for {item} in the '{categoryId}' category.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // --- State and Refs ---
+  const svgRef = useRef(null);
+  const pathRef = useRef(null);
+  const [drawing, setDrawing] = useState(false);
+  const [strokes, setStrokes] = useState([]);
+  const [currentStroke, setCurrentStroke] = useState([]);
+  const [targetPoints, setTargetPoints] = useState([]);
+  const [completed, setCompleted] = useState(false);
+  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
+  const [showFailureAnimation, setShowFailureAnimation] = useState(false);
+
+  const tolerance = 18;
+  const successThreshold = 0.9;
+
+  // --- RESET FUNCTION ---
+  const resetCanvas = useCallback(() => {
+    const pathEl = pathRef.current;
+    if (!pathEl) return;
+
+    const length = pathEl.getTotalLength();
+    const samples = 150;
+    const pts = [];
+    for (let i = 0; i <= samples; i++) {
+      const p = pathEl.getPointAtLength((i / samples) * length);
+      pts.push({ x: p.x, y: p.y, hit: false });
     }
 
-    // --- State and Refs ---
-    const svgRef = useRef(null); 
-    const pathRef = useRef(null);
-    const [drawing, setDrawing] = useState(false);
-    const [strokes, setStrokes] = useState([]);
-    const [currentStroke, setCurrentStroke] = useState([]);
-    const [targetPoints, setTargetPoints] = useState([]);
-    const [completed, setCompleted] = useState(false);
-    const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
-    const [showFailureAnimation, setShowFailureAnimation] = useState(false);
+    setTargetPoints(pts);
+    setStrokes([]);
+    setCurrentStroke([]);
+    setCompleted(false);
+    setShowSuccessAnimation(false);
+    setShowFailureAnimation(false);
+  }, [currentPath]); // currentPath dependency is crucial
 
-    const tolerance = 18;
-    const successThreshold = 0.9;
+  useEffect(() => {
+    if (pathRef.current) {
+      resetCanvas();
+    }
+  }, [currentPath, resetCanvas]);
 
-    // --- RESET FUNCTION ---
-    const resetCanvas = useCallback(() => {
-        const pathEl = pathRef.current;
-        if (!pathEl) return;
+  // --- POINTER/COORDINATE LOGIC (No change) ---
+  const getPointer = (e) => {
+    const svg = svgRef.current;
+    if (!svg) return { x: 0, y: 0 };
 
-        const length = pathEl.getTotalLength();
-        const samples = 150;
-        const pts = [];
-        for (let i = 0; i <= samples; i++) {
-            const p = pathEl.getPointAtLength((i / samples) * length);
-            pts.push({ x: p.x, y: p.y, hit: false });
-        }
+    const pt = svg.createSVGPoint();
 
-        setTargetPoints(pts);
-        setStrokes([]);
-        setCurrentStroke([]);
-        setCompleted(false);
-        setShowSuccessAnimation(false);
-        setShowFailureAnimation(false);
-    }, [currentPath]); // currentPath dependency is crucial
+    if (e.touches && e.touches.length > 0) {
+      pt.x = e.touches[0].clientX;
+      pt.y = e.touches[0].clientY;
+    } else {
+      pt.x = e.clientX;
+      pt.y = e.clientY;
+    }
 
-    useEffect(() => {
-        if (pathRef.current) {
-            resetCanvas();
-        }
-    }, [currentPath, resetCanvas]);
+    const ctm = svg.getScreenCTM();
+    if (ctm) return pt.matrixTransform(ctm.inverse());
+    return pt;
+  };
 
-    // --- POINTER/COORDINATE LOGIC (No change) ---
-    const getPointer = (e) => {
-        const svg = svgRef.current;
-        if (!svg) return { x: 0, y: 0 };
+  // --- DRAWING HANDLERS (No change) ---
+  const startDraw = (e) => {
+    if (completed) return;
+    e.preventDefault();
+    const p = getPointer(e);
+    setCurrentStroke([{ x: p.x, y: p.y }]);
+    setDrawing(true);
+  };
 
-        const pt = svg.createSVGPoint();
+  const moveDraw = (e) => {
+    if (!drawing) return;
+    e.preventDefault();
+    const p = getPointer(e);
+    setCurrentStroke((prev) => [...prev, { x: p.x, y: p.y }]);
+  };
 
-        if (e.touches && e.touches.length > 0) {
-            pt.x = e.touches[0].clientX;
-            pt.y = e.touches[0].clientY;
-        } else {
-            pt.x = e.clientX;
-            pt.y = e.clientY;
-        }
+  const endDraw = () => {
+    if (!drawing) return;
+    setDrawing(false);
 
-        const ctm = svg.getScreenCTM();
-        if (ctm) return pt.matrixTransform(ctm.inverse());
-        return pt;
-    };
+    const updatedStrokes =
+      currentStroke.length > 0 ? [...strokes, currentStroke] : strokes;
+    setStrokes(updatedStrokes);
+    setCurrentStroke([]);
+  };
 
-    // --- DRAWING HANDLERS (No change) ---
-    const startDraw = (e) => {
-        if (completed) return;
-        e.preventDefault();
-        const p = getPointer(e);
-        setCurrentStroke([{ x: p.x, y: p.y }]);
-        setDrawing(true);
-    };
+  // --- CHECK ACCURACY LOGIC (No change) ---
+  const checkAccuracy = (allStrokes) => {
+    if (allStrokes.length === 0) {
+      playFailureSound();
+      setShowFailureAnimation(true);
+      setTimeout(() => setShowFailureAnimation(false), 2500);
+      return;
+    }
 
-    const moveDraw = (e) => {
-        if (!drawing) return;
-        e.preventDefault();
-        const p = getPointer(e);
-        setCurrentStroke((prev) => [...prev, { x: p.x, y: p.y }]);
-    };
+    const updated = targetPoints.map((p) => ({ ...p, hit: false }));
 
-    const endDraw = () => {
-        if (!drawing) return;
-        setDrawing(false);
-
-        const updatedStrokes =
-            currentStroke.length > 0 ? [...strokes, currentStroke] : strokes;
-        setStrokes(updatedStrokes);
-        setCurrentStroke([]);
-    };
-
-    // --- CHECK ACCURACY LOGIC (No change) ---
-    const checkAccuracy = (allStrokes) => {
-        if (allStrokes.length === 0) {
-            playFailureSound(); 
-            setShowFailureAnimation(true);
-            setTimeout(() => setShowFailureAnimation(false), 2500);
-            return;
-        }
-
-        const updated = targetPoints.map((p) => ({ ...p, hit: false }));
-
-        allStrokes.forEach((stroke) => {
-            stroke.forEach((pt) => {
-                updated.forEach((t) => {
-                    const dx = t.x - pt.x;
-                    const dy = t.y - pt.y;
-                    if (dx * dx + dy * dy <= tolerance * tolerance) t.hit = true;
-                });
-            });
+    allStrokes.forEach((stroke) => {
+      stroke.forEach((pt) => {
+        updated.forEach((t) => {
+          const dx = t.x - pt.x;
+          const dy = t.y - pt.y;
+          if (dx * dx + dy * dy <= tolerance * tolerance) t.hit = true;
         });
+      });
+    });
 
-        const hitCount = updated.filter((p) => p.hit).length;
-        const accuracy = hitCount / updated.length;
+    const hitCount = updated.filter((p) => p.hit).length;
+    const accuracy = hitCount / updated.length;
 
-        if (accuracy >= successThreshold) {
-            playSuccessSound();
-            setShowSuccessAnimation(true);
-            setTimeout(() => setShowSuccessAnimation(false), 2500);
-            setCompleted(true);
-        } else {
-            playFailureSound();
-            setShowFailureAnimation(true);
-            setTimeout(() => setShowFailureAnimation(false), 2500);
-        }
-        setTargetPoints(updated);
-    };
+    if (accuracy >= successThreshold) {
+      playSuccessSound();
+      setShowSuccessAnimation(true);
+      setTimeout(() => setShowSuccessAnimation(false), 2500);
+      setCompleted(true);
+    } else {
+      playFailureSound();
+      setShowFailureAnimation(true);
+      setTimeout(() => setShowFailureAnimation(false), 2500);
+    }
+    setTargetPoints(updated);
+  };
 
-    // Handler for the Check Button
-    const checkMyTrace = () => {
-        checkAccuracy(strokes);
-    };
+  // Handler for the Check Button
+  const checkMyTrace = () => {
+    checkAccuracy(strokes);
+  };
 
-    // --- DISPLAY ITEMS (No change) ---
-    const getDisplayItem = () => {
-        if (categoryId === "shapes") {
-            // item ko Proper Case mein format karein jaisa list mein hai
-            return item.charAt(0).toUpperCase() + item.slice(1).toLowerCase(); 
-        }
-        return item.toUpperCase(); // Baaki sab uppercase mein
-    };
+  // --- DISPLAY ITEMS (No change) ---
+  const getDisplayItem = () => {
+    if (categoryId === "shapes") {
+      // item ko Proper Case mein format karein jaisa list mein hai
+      return item.charAt(0).toUpperCase() + item.slice(1).toLowerCase();
+    }
+    return item.toUpperCase(); // Baaki sab uppercase mein
+  };
 
-    // getTitle function bhi update nahi karna
-    const getTitle = () => {
-        if (categoryId === "letters") return "Letter";
-        if (categoryId === "numbers") return "Number";
-        if (categoryId === 'urdu') return 'Huroof';
-        if (categoryId === "shapes") return "Shape";
-        return "Item";
-    };
+  // getTitle function bhi update nahi karna
+  const getTitle = () => {
+    if (categoryId === "letters") return "Letter";
+    if (categoryId === "numbers") return "Number";
+  
+    if (categoryId === "shapes") return "Shape";
+    return "Item";
+  };
 
-    return (
-        <div
-            className="max-w-sm mx-auto p-3 bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl shadow-indigo-300 w-full"
-            style={{ maxWidth: `${width + 40}px` }}
+  return (
+    <div
+      className="max-w-sm mx-auto p-2 bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl shadow-indigo-300 w-full"
+      style={{ maxWidth: `${width + 40}px` }}
+    >
+      <div
+        className={`relative w-full overflow-hidden ${
+          completed
+            ? "border-green-500 shadow-green-400/70 border-8"
+            : "border-cyan-400 border-4"
+        }`}
+        style={{
+          height: `${height}px`,
+          width: `${width}px`,
+          margin: "0 auto",
+          borderRadius: "8px",
+          transition: "all 0.3s ease",
+        }}
+      >
+        <svg
+          ref={svgRef}
+          // ViewBox ko 350x350 se 300x400 kar diya gaya hai taaki path data align ho
+          viewBox="30 30 260 330"
+          className="w-full h-full bg-white cursor-crosshair"
+          onMouseDown={startDraw}
+          onMouseMove={moveDraw}
+          onMouseUp={endDraw}
+          onMouseLeave={endDraw}
+          onTouchStart={startDraw}
+          onTouchMove={moveDraw}
+          onTouchEnd={endDraw}
+          onTouchCancel={endDraw}
         >
-            <div
-                className={`relative w-full overflow-hidden ${
-                    completed
-                        ? "border-green-500 shadow-green-400/70 border-8"
-                        : "border-cyan-400 border-4"
-                }`}
-                style={{
-                    height: `${height}px`,
-                    width: `${width}px`,
-                    margin: "0 auto",
-                    borderRadius: "8px",
-                    transition: "all 0.3s ease",
-                }}
-            >
-                <svg
-                    ref={svgRef}
-                    // ViewBox ko 350x350 se 300x400 kar diya gaya hai taaki path data align ho
-                    viewBox="0 0 300 400" 
-                    className="w-full h-full bg-white cursor-crosshair"
-                    onMouseDown={startDraw}
-                    onMouseMove={moveDraw}
-                    onMouseUp={endDraw}
-                    onMouseLeave={endDraw}
-                    onTouchStart={startDraw}
-                    onTouchMove={moveDraw}
-                    onTouchEnd={endDraw}
-                    onTouchCancel={endDraw}
-                >
-                    {/* 1. Dotted Path (Guide) */}
-                    <path
-                        d={currentPath}
-                        fill="none"
-                        stroke="#67e8f9" // Cyan-300
-                        strokeWidth={5}
-                        strokeDasharray="6,10"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                    />
+          {/* 1. Dotted Path (Guide) */}
+          <path
+            d={currentPath}
+            fill="none"
+            stroke="#67e8f9" // Cyan-300
+            strokeWidth={5}
+            strokeDasharray="6,10"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
 
-                    {/* 2. Invisible Path for Measurement */}
-                    <path
-                        ref={pathRef}
-                        d={currentPath}
-                        fill="none"
-                        stroke="transparent"
-                        strokeWidth={20} // Width 20 rakha hai takay touch area theek ho
-                    />
+          {/* 2. Invisible Path for Measurement */}
+          <path
+            ref={pathRef}
+            d={currentPath}
+            fill="none"
+            stroke="transparent"
+            strokeWidth={20} // Width 20 rakha hai takay touch area theek ho
+          />
 
-                    {/* 3. User's Drawn Strokes */}
-                    {strokes.map((s, i) => (
-                        <polyline
-                            key={i}
-                            points={s.map((p) => `${p.x},${p.y}`).join(" ")}
-                            fill="none"
-                            stroke="#4F46E5" // Indigo-600
-                            strokeWidth={10}
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                        />
-                    ))}
+          {/* 3. User's Drawn Strokes */}
+          {strokes.map((s, i) => (
+            <polyline
+              key={i}
+              points={s.map((p) => `${p.x},${p.y}`).join(" ")}
+              fill="none"
+              stroke="#4F46E5" // Indigo-600
+              strokeWidth={10}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          ))}
 
-                    {/* 4. Currently Drawing Stroke */}
-                    {currentStroke.length > 0 && (
-                        <polyline
-                            points={currentStroke.map((p) => `${p.x},${p.y}`).join(" ")}
-                            fill="none"
-                            stroke="#4F46E5"
-                            strokeWidth={10}
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                        />
-                    )}
-                </svg>
+          {/* 4. Currently Drawing Stroke */}
+          {currentStroke.length > 0 && (
+            <polyline
+              points={currentStroke.map((p) => `${p.x},${p.y}`).join(" ")}
+              fill="none"
+              stroke="#4F46E5"
+              strokeWidth={10}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          )}
+        </svg>
 
-                {/* --- SUCCESS/FAILURE ANIMATION OVERLAYS --- */}
-                {showSuccessAnimation && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10 bg-white/70">
-                        <div className="text-3xl text-green-500 font-extrabold drop-shadow-lg animate-pop">
-                            Great Job! ⭐
-                        </div>
-                    </div>
-                )}
-
-                {showFailureAnimation && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10 bg-white/70">
-                        <div className="text-2xl text-red-500 font-extrabold drop-shadow-lg animate-pop">
-                            ❌ Oops! Try Again!
-                        </div>
-                    </div>
-                )}
+        {/* --- SUCCESS/FAILURE ANIMATION OVERLAYS --- */}
+        {showSuccessAnimation && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10 bg-white/70">
+            <div className="text-3xl text-green-500 font-extrabold drop-shadow-lg animate-pop">
+              Great Job! ⭐
             </div>
+          </div>
+        )}
 
-            <div className="flex justify-between w-full mt-6">
-                <button
-                    onClick={resetCanvas}
-                    className="flex items-center justify-center px-4 py-3 bg-red-500 text-white font-bold rounded-xl shadow-lg shadow-red-300/70 hover:bg-red-600 transition duration-150 transform hover:scale-[1.03] flex-grow mr-2 active:scale-[0.98]"
-                >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5 mr-1"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                    >
-                        <path
-                            fillRule="evenodd"
-                            d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                            clipRule="evenodd"
-                        />
-                    </svg>
-                    Clear
-                </button>
-                <button
-                    onClick={checkMyTrace}
-                    className="flex items-center justify-center px-4 py-3 bg-green-500 text-white font-bold rounded-xl shadow-lg shadow-green-300/70 hover:bg-green-600 transition duration-150 transform hover:scale-[1.03] flex-grow ml-2 active:scale-[0.98]"
-                >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5 mr-1"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M5 13l4 4L19 7"
-                        />
-                    </svg>
-                    Check My Trace
-                </button>
+        {showFailureAnimation && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10 bg-white/70">
+            <div className="text-2xl text-red-500 font-extrabold drop-shadow-lg animate-pop">
+              ❌ Oops! Try Again!
             </div>
-        </div>
-    );
+          </div>
+        )}
+      </div>
+
+      <div className="flex justify-between w-full mt-6">
+        <button
+          onClick={resetCanvas}
+          className="flex items-center justify-center px-4 py-3 bg-red-500 text-white font-bold rounded-xl shadow-lg shadow-red-300/70 hover:bg-red-600 transition duration-150 transform hover:scale-[1.03] flex-grow mr-2 active:scale-[0.98]"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5 mr-1"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fillRule="evenodd"
+              d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+              clipRule="evenodd"
+            />
+          </svg>
+          Clear
+        </button>
+        <button
+          onClick={checkMyTrace}
+          className="flex items-center justify-center px-4 py-3 bg-green-500 text-white font-bold rounded-xl shadow-lg shadow-green-300/70 hover:bg-green-600 transition duration-150 transform hover:scale-[1.03] flex-grow ml-2 active:scale-[0.98]"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5 mr-1"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M5 13l4 4L19 7"
+            />
+          </svg>
+          Check
+        </button>
+      </div>
+    </div>
+  );
 }

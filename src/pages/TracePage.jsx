@@ -5,94 +5,74 @@ import { getTracingData } from "../data/TracingData";
 import NavBar from "../components/Navbar";
 
 export default function TracePage() {
-  // Nayi routing se parameters fetch karein
-  const { categoryId, item } = useParams();
-  const navigate = useNavigate();
+    const { categoryId, item } = useParams();
+    const navigate = useNavigate();
+    const tracingData = getTracingData(categoryId, item);
 
-  // Data fetch karein
-  const tracingData = getTracingData(categoryId, item);
-
-  if (!tracingData) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-red-600">
-        404: Tracing Item Not Found!
-      </div>
-    );
-  }
-
-  const { categoryTitle, currentItem, nextItem, prevItem, backPath } =
-    tracingData;
-
-  const formatItemForUrl = (itemToFormat) => {
-    // 'numbers' aur 'urdu' ko jaisa hai waise hi rakhein (no case change)
-    if (categoryId === "numbers" || categoryId === "urdu") {
-      return itemToFormat;
+    if (!tracingData) {
+        return (
+            <div className="min-h-screen flex items-center justify-center font-bold text-indigo-900">
+                Item Not Found!
+            </div>
+        );
     }
-    return itemToFormat.toLowerCase();
-  };
 
+    const { categoryTitle, currentItem, nextItem, prevItem, backPath } = tracingData;
 
-  const handleNavigation = (newItem) => {
-    const urlItem = formatItemForUrl(newItem);
-    // Naye item aur category ke saath navigate karein
-    navigate(`/trace/${categoryId}/${urlItem}`);
-  };
+    // 🔊 SIMPLE VOICE HANDLER
+    const speak = (text) => {
+        if (!("speechSynthesis" in window)) return;
 
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#d3c8ff] via-[#d8f3ff] to-[#e8e1ff] p-4">
-      <NavBar themeColor="text-indigo-800" backPath={backPath} />
-      <h1 className="text-4xl font-extrabold text-indigo-800 tracking-tight drop-shadow-md mt-4 mb-4">
-        Trace the {categoryTitle} {currentItem}
-      </h1>
-      <TracingCanvas
-        item={currentItem}
-        categoryId={categoryId}
-        width={350}
-        height={350}
-      />
-      <div className="flex justify-between w-full max-w-sm mt-8">
-        <button
-          onClick={() => handleNavigation(prevItem)}
-          className="flex items-center justify-center px-4 py-3 bg-pink-500 text-white font-extrabold rounded-xl shadow-lg shadow-pink-300/70 hover:bg-pink-600 transition duration-150 transform hover:scale-105 active:scale-95 flex-1 mr-3 min-w-0"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5 mr-1"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={3}
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-          <span className="truncate">{prevItem}</span>
-        </button>
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = "en-US";
+        utterance.rate = 0.9;
+        utterance.pitch = 1.1;
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(utterance);
+    };
 
-        <button
-          onClick={() => handleNavigation(nextItem)}
-          className="flex items-center justify-center px-4 py-3 bg-cyan-500 text-white font-extrabold rounded-xl shadow-lg shadow-cyan-300/70 hover:bg-cyan-600 transition duration-150 transform hover:scale-105 active:scale-95 flex-1 ml-3 min-w-0"
-        >
-          <span className="truncate">{nextItem}</span>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5 ml-1"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={3}
-              d="M9 5l7 7-7 7"
-            />
-          </svg>
-        </button>
-      </div>
-    </div>
-  );
+    return (
+        <div className="h-screen max-h-screen flex flex-col items-center bg-gradient-to-br from-indigo-200 via-cyan-100 to-purple-200 p-2 md:p-4 overflow-hidden">
+            <NavBar themeColor="text-indigo-900" backPath={backPath} />
+
+            {/* HEADER */}
+            <header className="text-center mt-5 mb-2">
+                <h1 className="text-indigo-900  text-2xl md:text-4xl font-black text-indigo-900 drop-shadow-sm ">
+                    Tracing {categoryTitle}  {currentItem}
+                </h1>
+            </header>
+
+            {/* TRACING AREA */}
+            <div className="bg-white/30 backdrop-blur-xl p-3 md:p-5 rounded-[30px] shadow-2xl max-w-lg w-full border border-white/40 flex flex-col items-center flex-shrink min-h-0">
+                <TracingCanvas
+                    item={currentItem}
+                    categoryId={categoryId}
+                    height={350}
+                    prevItem={prevItem}
+                    nextItem={nextItem}
+                    onSuccess={() => speak("Great job! Well done")}
+                    onFail={() => speak("Try again")}
+                />
+            </div>
+
+            {/* BOTTOM NAV */}
+            <div className="flex justify-between w-full max-w-lg mt-4 gap-4 mb-2">
+                <button
+                    disabled={!prevItem}
+                    onClick={() => navigate(`/trace/${categoryId}/${prevItem}`)}
+                    className="flex-1 bg-white/50 backdrop-blur-md border-2 border-white py-3 rounded-2xl font-black text-indigo-900 hover:bg-white transition-all shadow-md flex items-center justify-center gap-2 text-sm disabled:opacity-40"
+                >
+                    ◀ {prevItem}
+                </button>
+
+                <button
+                    disabled={!nextItem}
+                    onClick={() => navigate(`/trace/${categoryId}/${nextItem}`)}
+                    className="flex-1 bg-indigo-900 py-3 rounded-2xl font-black text-white hover:bg-indigo-800 transition-all shadow-lg flex items-center justify-center gap-2 text-sm disabled:opacity-40"
+                >
+                    {nextItem} ▶
+                </button>
+            </div>
+        </div>
+    );
 }

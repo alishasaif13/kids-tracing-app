@@ -1,59 +1,54 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import TracingCard from '../components/TracingCard';
+import AlphabetCard from '../components/AlphabetsCard'; 
 import { TRACING_ITEMS } from '../data/TracingData'; 
-import NavBar from '../components/Navbar'; // NavBar component import karein
+import NavBar from '../components/Navbar';
 
-// Huroof-e-Tahajji ki list aur category details TRACING_ITEMS se nikalen
-const URDU_DATA = TRACING_ITEMS.urdu;
-const URDU_ALPHABETS = URDU_DATA.items;
-const CATEGORY_ID = 'urdu';
+const URDU_AUDIO_MAP = {
+    "ا": "alif", "ب": "ba", "ت": "taa", "ث": "tha", "ج": "jeem", 
+    "ح": "haa", "خ": "khaa", "د": "dal", "ذ": "dhal", "ر": "raa", 
+    "ز": "jaa", "س": "seen", "ش": "sheen", "ص": "saad", "ض": "dhaad", 
+    "ط": "toa", "ظ": "dhaa", "ع": "ain", "غ": "ghain", "ف": "faa", 
+    "ق": "qaaf", "ک": "kaaf", "ل": "laam", "م": "meem", "ن": "noon", 
+    "و": "waw", "ھ": "ha", "ء": "hamza", "ی": "yaa",
+};
 
 export default function UrduPage() {
-    const navigate = useNavigate()
+    const categoryId = 'urdu';
+    const items = TRACING_ITEMS[categoryId].items; 
 
     const handleItemClick = (item) => {
-        // TracePage ka path: /trace/:categoryId/:item
-        navigate(`/trace/${CATEGORY_ID}/${item}`);
+        const fileName = URDU_AUDIO_MAP[item];
+        if (fileName) {
+            const audio = new Audio(`/sounds/${fileName}.mp3`);
+            audio.play().catch((err) => {
+                console.error("Voice play failed. Check if file exists in public/sounds/", err);
+            });
+        }
     };
 
     return (
-        // relative class for NavBar positioning
-        <div className="min-h-screen relative flex flex-col items-center bg-gradient-to-br from-green-50 to-teal-100 p-6">
+        <div className="min-h-screen flex flex-col items-center bg-gradient-to-br from-indigo-200 via-cyan-100 to-purple-200 p-4 md:p-8">
+            <NavBar themeColor="text-indigo-900" />
             
-            {/* 1. NavBar Add Karein (Theme Green ke mutabiq) */}
-            <NavBar themeColor="text-green-800" />
-            
-            {/* 2. Content ko NavBar ke neechay dhakelne ke liye div aur pt-20 */}
-            <div className="pt-5 w-full max-w-7xl">
-                <header className="text-center py-6 mb-10">
-                    <h1 className="text-5xl md:text-6xl font-extrabold text-indigo-800 tracking-tight drop-shadow-md">
-                        حروف تہجی 
-                    </h1>
-                    <p className="text-xl text-indigo-600 mt-5 font-medium">
-                        Select an Urdu letter to start tracing.
-                    </p>
-                </header>
-
-                {/* 3. Urdu Huroof Cards Container (RTL Layout) */}
-                <div 
-                    className="flex flex-wrap justify-end gap-4 max-w-7xl mx-auto" 
-                    dir="rtl" // Yeh sabse ahem hai: Right-to-Left direction set karein
-                >
-                    {URDU_ALPHABETS.map((huroof) => (
-                        <TracingCard
-                            key={huroof}
-                            item={huroof} 
-                            // Title ko remove kar diya gaya hai kyunki item hi title hai
-                            colorClass="bg-teal-600 hover:bg-teal-700"
-                            // Styling for Urdu Font
-                            itemStyle={{ fontFamily: 'Jameel Noori Nastaleeq, Tahoma, serif', fontSize: '3rem' }}
-                            onClick={() => handleItemClick(huroof)}
+            <header className="text-center mt-5 mb-8">
+                <h1 className="text-4xl md:text-6xl font-extrabold text-indigo-900 tracking-tight drop-shadow-md">
+                    حروف تہجی سیکھیں
+                </h1>
+                <p className="text-lg text-indigo-700 font-semibold mt-2">
+                    کسی بھی حرف پر کلک کریں اور آواز سنیں!
+                </p>
+            </header>
+            <div className="bg-white/30 backdrop-blur-xl p-6 md:p-10 rounded-[40px] shadow-2xl max-w-6xl w-full border border-white/40 mb-10" dir="rtl">
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
+                    {items.map((item) => (
+                        <AlphabetCard
+                            key={item}
+                            letter={item} 
+                            onClick={() => handleItemClick(item)}
                         />
                     ))}
                 </div>
             </div>
-            
         </div>
     );
 }

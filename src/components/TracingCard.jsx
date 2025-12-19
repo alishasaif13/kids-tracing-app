@@ -1,85 +1,21 @@
-// src/components/TracingCard.jsx
-import React from 'react';
-
-export default function TracingCard({ item, title, onClick, colorClass, isCompleted }) {
-    
-    const isCategory = title !== undefined;
-    
-    // Card size remains fixed for list items
-    const cardSize = isCategory ? 'w-48 h-48 m-4' : 'w-24 h-28 md:w-36 md:h-36 m-2';
-    
-    // Default size for single letter/digit
-    const defaultIconSize = 'text-6xl md:text-8xl';
-    
-    // Dynamic Font Size Calculation
-    let finalIconSize = defaultIconSize;
-    if (!isCategory && item) {
-        const itemLength = String(item).length;
-        if (itemLength > 4) {
-            // Very small for very long shape names
-            finalIconSize = 'text-lg md:text-xl font-normal pt-2'; 
-        } else if (itemLength > 2) {
-            // Medium size for 3-4 digits (like 100) or words (like Star)
-            finalIconSize = 'text-3xl md:text-5xl'; 
-        } else if (itemLength > 1) {
-             // Large size for 2 digits (like 10)
-            finalIconSize = 'text-4xl md:text-6xl'; 
-        } 
-        // Single digit/letter remains defaultIconSize
-    }
-
-    const completionClass = isCompleted 
-        ? 'border-4 border-cyan-400 shadow-inner' 
-        : 'border-2 border-white/30';
-
-    let finalColorClass = colorClass;
-    
-    // Category card nahi hai, toh color randomize karein
-    if (!isCategory) {
-        const colors = [
-            'bg-indigo-600', 
-            'bg-teal-600', 
-            'bg-pink-600', 
-            'bg-amber-600', 
-            'bg-purple-600'
-        ];
-        // CharCode ya value ko unique color dene ke liye use karein
-        const itemKey = (String(item).match(/\d+/g) ? parseInt(item) : String(item).charCodeAt(0));
-        
-        finalColorClass = colors[itemKey % colors.length] + ' hover:opacity-90';
-    } else {
-        // Agar category card hai, aur colorClass define nahi hai toh default de dein
-        if (!finalColorClass) {
-             finalColorClass = 'bg-gray-600 hover:bg-gray-700';
-        }
-    }
-
-
-    return (
-        <div
-            onClick={onClick}
-            className={`relative flex flex-col items-center justify-center 
-                        ${finalColorClass} text-white rounded-2xl shadow-xl 
-                        transform transition-all duration-300 ease-in-out 
-                        hover:scale-105 hover:shadow-2xl active:scale-95 cursor-pointer 
-                        ${cardSize} ${isCategory ? 'border-4 border-white/30' : completionClass}`}
-        >
-            
-            <span className={`${finalIconSize} font-black drop-shadow-md text-center px-1`}>
-                {item}
-            </span>
-            
-            {isCategory && (
-                <span className="text-xl md:text-2xl font-bold drop-shadow-sm mt-2">
-                    {title}
-                </span>
-            )}
-            
-            {isCompleted && (
-                <span className="absolute top-2 right-2 text-3xl" role="img">
-                    ⭐
-                </span>
-            )}
-        </div>
-    );
+export default function TracingCard({ title, icon, onClick, colorClass }) {
+  return (
+    <div
+      onClick={onClick}
+      className={`group relative h-52 flex flex-col items-center justify-center 
+                 bg-gradient-to-b ${colorClass} text-white rounded-3xl shadow-xl 
+                 transform transition-all duration-300 ease-out
+                 hover:-translate-y-2 hover:shadow-2xl active:scale-95 cursor-pointer 
+                 border-b-8 border-black/20`}
+    >
+      <div className="absolute inset-0 bg-white/10 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
+      <span className="text-6xl font-black drop-shadow-lg mb-3 transform group-hover:scale-110 transition-transform">
+        {icon}
+      </span>
+      <span className="text-2xl font-bold tracking-wide drop-shadow-md">
+        {title}
+      </span>
+      <div className="mt-2 w-12 h-1.5 bg-white/40 rounded-full group-hover:w-20 transition-all" />
+    </div>
+  );
 }

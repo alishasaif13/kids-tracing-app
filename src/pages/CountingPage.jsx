@@ -1,10 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import TracingCard from '../components/TracingCard';
-// NavBar component import karein
+import AlphabetCard from '../components/AlphabetsCard';
 import NavBar from '../components/Navbar'; 
 
-// Function to generate numbers 1 through 100
 const generateNumbers = () => {
     return Array.from({ length: 20 }, (_, i) => String(i + 1)); 
 };
@@ -15,41 +13,35 @@ export default function CountingPage() {
     const categoryId = 'numbers';
 
     const handleItemClick = (item) => {
-        // Navigate to the tracing page: /trace/numbers/1
-        navigate(`/trace/${categoryId}/${item.toLowerCase()}`); 
+        navigate(`/trace/${categoryId}/${item}`); 
     };
 
     return (
-        // relative class for NavBar positioning
-        <div className="min-h-screen relative bg-gradient-to-br from-indigo-100 to-cyan-50 p-6">
+        <div className="min-h-screen flex flex-col items-center bg-gradient-to-br from-indigo-200 via-cyan-100 to-purple-200 p-4 md:p-8">
+            <NavBar themeColor="text-indigo-900" />
             
-            {/* 1. NavBar Add Karein */}
-            <NavBar themeColor="text-indigo-800" />
+            <header className="text-center mt-5 mb-8">
+                <h1 className="text-4xl md:text-6xl font-extrabold text-indigo-900 tracking-tight drop-shadow-md">
+                    Trace the Numbers
+                </h1>
+                <p className="text-lg text-indigo-700 font-semibold mt-2">
+                    Pick a number from 1 to 20!
+                </p>
+            </header>
             
-            {/* 2. Content ko NavBar ke neechay dhakelne ke liye div aur pt-20 */}
-            <div className="pt-5"> 
-                <header className="text-center py-6 mb-10">
-                    <h1 className="text-5xl md:text-5xl font-extrabold text-indigo-800 tracking-tight drop-shadow-md">
-                        Trace the Numbers (1-20)
-                    </h1>
-                    <p className="text-xl text-indigo-600 mt-5">
-                        Click on a number to start tracing.
-                    </p>
-                </header>
-                
-                {/* Number Cards List */}
-                <div className="flex flex-wrap justify-center gap-2 max-w-7xl mx-auto"> 
+            <div className="bg-white/30 backdrop-blur-xl p-6 md:p-10 rounded-[40px] shadow-2xl max-w-6xl w-full border border-white/40 mb-10">
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-8 gap-4 md:gap-6">
                     {items.map((item) => (
-                        <TracingCard
+                        <AlphabetCard
                             key={item}
-                            item={item} 
+                            letter={item} 
                             onClick={() => handleItemClick(item)}
-                          
                         />
                     ))}
                 </div>
             </div>
-            
+
+           
         </div>
     );
 }

@@ -1,4 +1,3 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import TracingCard from '../components/TracingCard';
 import NavBar from '../components/Navbar';
@@ -7,68 +6,62 @@ const CATEGORIES = [
   { 
     id: 'letters', 
     title: 'Alphabets', 
-    icon: 'abc', 
-    colorClass: 'bg-indigo-600 hover:bg-indigo-700',
+    icon: 'ABC', 
+    colorClass: 'from-emerald-400 to-cyan-700', 
     path: '/letters' 
   },
   { 
     id: 'numbers', 
     title: 'Numbers', 
     icon: '123', 
-    colorClass: 'bg-teal-600 hover:bg-teal-700',
+    colorClass: 'from-orange-400 to-red-600', 
     path: '/counting' 
-  },
-  { 
-    id: 'urdu', 
-    title: 'حروف تہجی ', 
-    icon: 'أبج', 
-    colorClass: 'bg-green-600 hover:bg-green-700', 
-    path: '/urdu' 
   },
   { 
     id: 'shapes', 
     title: 'Shapes', 
     icon: '★', 
-    colorClass: 'bg-pink-600 hover:bg-pink-700',
+    colorClass: 'from-rose-400 to-pink-600',
     path: '/shapes' 
   },
+  { 
+    id: 'urdu', 
+    title: 'حروف تہجی', 
+  icon: 'ا ب ج',
+    colorClass: 'from-fuchsia-500 to-purple-800', 
+    path: '/urdu' 
+  }
 ];
 
 export default function CategoriesPage() {
   const navigate = useNavigate();
 
-  const handleCategoryClick = (category) => {
-    navigate(category.path); 
-  };
-
   return (
-    <div className="min-h-screen relative flex flex-col items-center pt-16 bg-gradient-to-br from-indigo-100 to-cyan-50 p-6">
+    <div className="min-h-screen flex flex-col items-center bg-gradient-to-br from-indigo-200 via-cyan-100 to-purple-200 p-6">
+      <NavBar themeColor="text-indigo-900" />
       
-  
-     <NavBar themeColor="text-indigo-800" />
-      
-      <header className="text-center py-6 mb-8 mt-5"> {/* mb kam ki gayi */}
-        <h1 className="text-5xl md:text-5xl font-extrabold text-indigo-800 tracking-tight drop-shadow-md">
+      <header className="text-center mt-20 mb-10">
+        <h1 className="text-5xl md:text-7xl font-extrabold text-indigo-900 tracking-tight drop-shadow-lg">
           Choose a Category
         </h1>
-        <p className="text-xl text-indigo-600 mt-5">
-          What would you like to trace first?
+        <p className="text-xl md:text-2xl text-indigo-700 font-medium mt-4">
+          What would you like to trace today?
         </p>
       </header>
 
-      {/* 2. Main Content Area: Flex-wrap aur Justify-center wapas laya gaya */}
-      <div className="flex flex-wrap justify-center gap-6 max-w-5xl mx-auto"> 
-        {CATEGORIES.map((category) => (
+      <div className="bg-white/30 backdrop-blur-xl p-8 md:p-12 rounded-[50px] shadow-2xl max-w-6xl w-full border border-white/40">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          {CATEGORIES.map((category) => (
             <TracingCard
-                key={category.id}
-                item={category.icon}
-                title={category.title}
-                colorClass={category.colorClass}
-                onClick={() => handleCategoryClick(category)} 
+              key={category.id}
+              icon={category.icon}
+              title={category.title}
+              colorClass={category.colorClass}
+              onClick={() => navigate(category.path)} 
             />
-        ))}
+          ))}
+        </div>
       </div>
-      
     </div>
   );
 }
