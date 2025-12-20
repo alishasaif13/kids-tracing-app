@@ -8,9 +8,13 @@ const NavBar = ({
 }) => {
   const navigate = useNavigate();
 
-  const handleBack = () => {
-    navigate(backPath, { replace: true });
-  };
+ const handleBack = () => {
+  if (backPath) {
+    navigate(backPath);
+  } else {
+    navigate(-1);
+  }
+};
 
   const handleHome = () => {
     navigate(homePath, { replace: true });
