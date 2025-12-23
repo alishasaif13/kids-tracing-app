@@ -6,9 +6,14 @@ export default function LearningNumbers() {
     const numbers = Array.from({ length: 20 }, (_, i) => String(i + 1));
 
     const playSound = (num) => {
+        // Purani saari awazon ko khatam karo taakay interference na ho
+        window.speechSynthesis.cancel();
+
         const utterance = new SpeechSynthesisUtterance(num);
         utterance.lang = 'en-US';
         utterance.rate = 0.8;
+        
+        // Nayi awaz shuru karo
         window.speechSynthesis.speak(utterance);
     };
 
@@ -25,7 +30,6 @@ export default function LearningNumbers() {
                 </p>
             </header>
 
-            {/* Glassy Container for Symmetry */}
             <div className="bg-white/30 backdrop-blur-xl p-6 md:p-10 rounded-[40px] shadow-2xl max-w-6xl w-full border border-white/40 mb-10">
                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
                     {numbers.map(num => (

@@ -6,9 +6,14 @@ export default function LearningAlphabets() {
     const alphabets = Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i));
 
     const playSound = (letter) => {
+        // 1. Pehle se chalti hui ya queue mein mojud sari awazon ko khatam karo
+        window.speechSynthesis.cancel();
+
         const utterance = new SpeechSynthesisUtterance(letter);
         utterance.lang = 'en-US';
         utterance.rate = 0.7; 
+        
+        // 2. Ab nayi awaz play karo
         window.speechSynthesis.speak(utterance);
     };
 
