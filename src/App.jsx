@@ -14,8 +14,12 @@ import TracePage from './pages/TracePage';
 import LearningHub from './pages/LearningHub';
 import LearningAlphabets from './pages/LearningAlphabets';
 import LearningNumbers from './pages/LearningNumbers';
+
 import MatchingHub from './pages/MatchingHub';
-import MatchingGame from './pages/MatchingGame';
+import UrduMatch from './pages/UrduMatch';
+import CountingMatch from './pages/CountingMatch';
+import ShapeMatch from './pages/ShapeMatch';
+import AlphabetMatch from './pages/AlphabetsMatch';
 
 function App() {
     return (
@@ -34,9 +38,13 @@ function App() {
                 <Route path="/shapes" element={<ShapesPage />} /> 
                 {/* --- Naya Route Urdu Huroof ke liye --- */}
                 <Route path="/urdu" element={<UrduPage />} /> 
-                <Route path="/matching-hub" element={<MatchingHub />} />
-<Route path="/matching/:type" element={<MatchingGame />} />
-                {/* Level 4: Tracing Canvas (Same structure) */}
+
+             <Route path="/matching-hub" element={<MatchingHub />} />
+        <Route path="/matching/urdu" element={<UrduMatch />} />
+        <Route path="/matching/alphabets" element={<AlphabetMatch/>} />
+        <Route path="/matching/numbers" element={<CountingMatch />} />
+        <Route path="/matching/shapes" element={<ShapeMatch/>} />
+
                 <Route path="/trace/:categoryId/:item" element={<TracePage />} /> 
             </Routes>
         </Router>

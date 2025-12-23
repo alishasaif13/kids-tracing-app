@@ -35,7 +35,7 @@ export default function CategoriesPage() {
       
       <header className="text-center mt-10 mb-10">
         <h1 className="text-5xl md:text-7xl font-extrabold text-indigo-900 tracking-tight drop-shadow-lg">
-          Choose a Category
+         Tracing Hub
         </h1>
         <p className="text-xl md:text-2xl text-indigo-700 font-medium mt-4">
           What would you like to trace today?

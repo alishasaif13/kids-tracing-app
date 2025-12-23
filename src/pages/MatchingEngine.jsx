@@ -1,148 +1,135 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 
-export default function MatchingEngine({ leftItems, rightItems, type }) {
+export default function MatchingEngine({ leftItems = [], rightItems = [] }) {
+    const [matches, setMatches] = useState({});
+    const [isDragging, setIsDragging] = useState(false);
+    const [currentLine, setCurrentLine] = useState(null);
+    const [completedLines, setCompletedLines] = useState([]);
+    const [shuffledRight, setShuffledRight] = useState([]);
+    const [feedback, setFeedback] = useState(null);
+    
     const containerRef = useRef(null);
     const canvasRef = useRef(null);
-    const [isDrawing, setIsDrawing] = useState(false);
-    const [startNode, setStartNode] = useState(null);
-    const [lines, setLines] = useState([]); 
-    const [currentPoint, setCurrentPoint] = useState(null);
-    const [status, setStatus] = useState(null); // 'success' or 'fail'
 
-    // Resize Canvas
+    const playSound = (isSuccess) => {
+        try {
+            const audio = new Audio(isSuccess ? "/sounds/success.mp3" : "/sounds/tryagain.mp3");
+            audio.play().catch(e => console.log("Audio error"));
+        } catch (e) { console.log(e); }
+    };
+
     useEffect(() => {
-        const resize = () => {
+        setShuffledRight([...rightItems].sort(() => Math.random() - 0.5));
+    }, [rightItems]);
+
+    useEffect(() => {
+        const resizeCanvas = () => {
             if (canvasRef.current && containerRef.current) {
-                canvasRef.current.width = containerRef.current.clientWidth;
-                canvasRef.current.height = containerRef.current.clientHeight;
+                canvasRef.current.width = containerRef.current.offsetWidth;
+                canvasRef.current.height = containerRef.current.offsetHeight;
+                drawAll();
             }
         };
-        resize();
-        window.addEventListener('resize', resize);
-        return () => window.removeEventListener('resize', resize);
-    }, []);
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        return () => window.removeEventListener('resize', resizeCanvas);
+    }, [currentLine, completedLines]);
 
-    // Canvas Drawing Logic
-    useEffect(() => {
-        const ctx = canvasRef.current.getContext('2d');
+    const drawAll = () => {
+        const ctx = canvasRef.current?.getContext('2d');
+        if (!ctx) return;
         ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+        ctx.lineCap = 'round';
+        ctx.lineWidth = 6;
 
-        // Draw Matched Lines
-        lines.forEach(line => {
-            ctx.beginPath();
-            ctx.moveTo(line.x1, line.y1);
-            ctx.lineTo(line.x2, line.y2);
+        completedLines.forEach(line => {
             ctx.strokeStyle = '#22c55e';
-            ctx.lineWidth = 8;
-            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(line.x1, line.y1); ctx.lineTo(line.x2, line.y2);
             ctx.stroke();
         });
 
-        // Draw Current Dragging Line
-        if (isDrawing && startNode && currentPoint) {
+        if (currentLine) {
+            ctx.strokeStyle = '#6366f1';
+            ctx.setLineDash([5, 5]);
             ctx.beginPath();
-            ctx.moveTo(startNode.x, startNode.y);
-            ctx.lineTo(currentPoint.x, currentPoint.y);
-            ctx.strokeStyle = '#4F46E5';
-            ctx.lineWidth = 6;
-            ctx.setLineDash([8, 6]);
-            ctx.lineCap = 'round';
+            ctx.moveTo(currentLine.startX, currentLine.startY); ctx.lineTo(currentLine.endX, currentLine.endY);
             ctx.stroke();
             ctx.setLineDash([]);
         }
-    }, [lines, isDrawing, currentPoint, startNode]);
+    };
 
     const getCoords = (e) => {
-        const rect = canvasRef.current.getBoundingClientRect();
-        const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
-        const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
-        return { x, y };
+        const rect = containerRef.current.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return { x: clientX - rect.left, y: clientY - rect.top };
     };
 
-    const handleStart = (e, item) => {
-        if (status || lines.find(l => l.val === item)) return;
-        const p = getCoords(e);
-        setStartNode({ val: item, x: p.x, y: p.y });
-        setIsDrawing(true);
-        setCurrentPoint(p);
+    const handleStart = (item, e) => {
+        if (matches[item.id]) return;
+        const coords = getCoords(e);
+        setCurrentLine({ id: item.id, startX: coords.x, startY: coords.y, endX: coords.x, endY: coords.y });
+        setIsDragging(true);
     };
 
-    const handleEnd = (e) => {
-        if (!isDrawing) return;
-        setIsDrawing(false);
+    const handleMove = (e) => {
+        if (!isDragging || !currentLine) return;
+        const coords = getCoords(e);
+        setCurrentLine(prev => ({ ...prev, endX: coords.x, endY: coords.y }));
+        drawAll();
+    };
 
-        const endX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
-        const endY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
-        const targetEl = document.elementFromPoint(endX, endY);
-        const targetVal = targetEl?.getAttribute('data-value');
-
-        if (targetVal === startNode.val) {
-            // Success Case
-            const rect = targetEl.getBoundingClientRect();
-            const crect = containerRef.current.getBoundingClientRect();
-            const x2 = rect.left - crect.left;
-            const y2 = rect.top - crect.top + rect.height/2;
-
-            setLines([...lines, { x1: startNode.x, y1: startNode.y, x2, y2, val: startNode.val }]);
-            setStatus('success');
-            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-            setTimeout(() => setStatus(null), 1500);
+    const handleEnd = (targetItem, e) => {
+        if (!isDragging || !currentLine) return;
+        if (targetItem && currentLine.id === targetItem.id) {
+            const coords = getCoords(e);
+            setCompletedLines(prev => [...prev, { x1: currentLine.startX, y1: currentLine.startY, x2: coords.x, y2: coords.y }]);
+            setMatches(prev => ({ ...prev, [currentLine.id]: true }));
+            setFeedback('success');
+            playSound(true);
+            if (Object.keys(matches).length + 1 === leftItems.length) confetti();
         } else {
-            // Failure Case
-            setStatus('fail');
-            setTimeout(() => setStatus(null), 1500);
+            setFeedback('fail');
+            playSound(false);
         }
-        setStartNode(null);
-        setCurrentPoint(null);
+        setCurrentLine(null);
+        setIsDragging(false);
+        setTimeout(() => setFeedback(null), 1500);
     };
 
     return (
-        <div ref={containerRef} 
-             className="relative w-full max-w-4xl h-[550px] bg-white rounded-[40px] shadow-[0_20px_50px_rgba(0,0,0,0.1)] p-12 flex justify-between items-center touch-none select-none"
-             onMouseMove={(e) => isDrawing && setCurrentPoint(getCoords(e))}
-             onMouseUp={handleEnd}
-             onTouchMove={(e) => isDrawing && setCurrentPoint(getCoords(e))}
-             onTouchEnd={handleEnd}>
-            
+        <div ref={containerRef} onMouseMove={handleMove} onTouchMove={handleMove} className="relative max-w-4xl mx-auto p-10 bg-white/50 backdrop-blur-md rounded-[40px] shadow-xl border-4 border-white overflow-hidden touch-none">
             <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none" />
-
-            {/* Left Column (Question) */}
-            <div className="flex flex-col justify-between h-full z-10">
-                {leftItems.map((item, i) => (
-                    <div key={i}
-                        onMouseDown={(e) => handleStart(e, item)}
-                        onTouchStart={(e) => handleStart(e, item)}
-                        className={`w-20 h-20 flex items-center justify-center text-3xl font-bold rounded-full cursor-pointer shadow-lg transition-all active:scale-95
-                        ${lines.find(l => l.val === item) ? 'bg-green-500 text-white' : 'bg-indigo-600 text-white hover:bg-indigo-700'}`}>
-                        {item}
-                    </div>
-                ))}
-            </div>
-
-            {/* Right Column (Target) */}
-            <div className="flex flex-col justify-between h-full z-10">
-                {rightItems.map((item, i) => (
-                    <div key={i}
-                        data-value={item}
-                        className={`w-20 h-20 flex items-center justify-center text-3xl font-bold rounded-full shadow-md border-4 border-dashed
-                        ${lines.find(l => l.val === item) ? 'bg-green-100 border-green-500 text-green-700' : 'bg-pink-500 text-white border-pink-200'}`}>
-                        {item}
-                    </div>
-                ))}
-            </div>
-
-            {/* Animation Overlays (Tracing Canvas Style) */}
-            {status === 'success' && (
-                <div className="absolute inset-0 bg-white/60 flex items-center justify-center rounded-[40px] z-50 pointer-events-none">
-                    <div className="text-4xl font-black text-green-600 animate-bounce">GREAT JOB! ⭐</div>
+            <AnimatePresence>
+                {feedback && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className={`absolute inset-0 flex items-center justify-center z-50 ${feedback === 'success' ? 'bg-green-500/10' : 'bg-red-500/10'} pointer-events-none`}>
+                        <motion.div initial={{ scale: 0.5 }} animate={{ scale: 1 }} className={`px-8 py-4 rounded-2xl shadow-2xl border-4 ${feedback === 'success' ? 'bg-white border-green-500 text-green-600' : 'bg-white border-red-500 text-red-600'} text-3xl font-black`}>
+                            {feedback === 'success' ? 'Great Job! ⭐' : '❌ Oops! Try Again!'}
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+            <div className="grid grid-cols-2 gap-32 relative z-10">
+                <div className="flex flex-col gap-4">
+                    {leftItems.map(item => (
+                        <div key={item.id} className="relative flex items-center">
+                            <div onMouseDown={(e) => handleStart(item, e)} onTouchStart={(e) => handleStart(item, e)} className={`flex-1 h-16 flex items-center justify-center text-3xl font-black rounded-2xl border-b-4 transition-all ${matches[item.id] ? 'bg-green-400 border-green-600 text-white' : 'bg-white border-indigo-200 shadow-sm'}`}>{item.content}</div>
+                            <div className={`w-3 h-3 rounded-full absolute -right-1.5 z-20 ${matches[item.id] ? 'bg-green-600' : 'bg-indigo-400'}`} />
+                        </div>
+                    ))}
                 </div>
-            )}
-            {status === 'fail' && (
-                <div className="absolute inset-0 bg-red-50/60 flex items-center justify-center rounded-[40px] z-50 pointer-events-none">
-                    <div className="text-3xl font-black text-red-600 animate-shake">TRY AGAIN! ❌</div>
+                <div className="flex flex-col gap-4">
+                    {shuffledRight.map(item => (
+                        <div key={item.id} className="relative flex items-center">
+                            <div className={`w-3 h-3 rounded-full absolute -left-1.5 z-20 ${matches[item.id] ? 'bg-green-600' : 'bg-indigo-400'}`} />
+                            <div onMouseUp={(e) => handleEnd(item, e)} onTouchEnd={(e) => handleEnd(item, e)} className={`flex-1 h-16 flex items-center justify-center text-3xl font-black rounded-2xl border-b-4 transition-all ${matches[item.id] ? 'bg-green-100 text-green-700 opacity-50' : 'bg-white border-indigo-200 shadow-sm'}`}>{item.match}</div>
+                        </div>
+                    ))}
                 </div>
-            )}
+            </div>
         </div>
     );
 }

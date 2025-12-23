@@ -1,122 +1,106 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import NavBar from '../components/Navbar';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import confetti from 'canvas-confetti';
 
-// Sab categories ka data yahan hai
-const MATCHING_DATA = {
-    alphabets: { left: ['A', 'B', 'C', 'D'], right: ['C', 'A', 'D', 'B'] },
-    numbers: { left: ['1', '2', '3', '4'], right: ['3', '4', '1', '2'] },
-    urdu: { left: ['ا', 'ب', 'ت', 'ج'], right: ['ت', 'ج', 'ا', 'ب'] },
-    shapes: { left: ['★', '●', '■', '▲'], right: ['●', '▲', '★', '■'] }
-};
-
-export default function MatchingGame() {
-    const { type } = useParams();
-    const canvasRef = useRef(null);
-    const [isDrawing, setIsDrawing] = useState(false);
-    const [lines, setLines] = useState([]);
-    const [currentLine, setCurrentLine] = useState(null);
-
-    const data = MATCHING_DATA[type] || MATCHING_DATA.alphabets;
+const MatchingGame = ({ data, type, onComplete }) => {
+    const [leftItems, setLeftItems] = useState([]);
+    const [rightItems, setRightItems] = useState([]);
+    const [selectedLeft, setSelectedLeft] = useState(null);
+    const [matches, setMatches] = useState({}); // {leftId: rightId}
+    const [feedback, setFeedback] = useState(null); // 'success' or 'fail'
 
     useEffect(() => {
-        const canvas = canvasRef.current;
-        const ctx = canvas.getContext('2d');
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        ctx.lineCap = 'round';
-        ctx.lineWidth = 6;
-        ctx.strokeStyle = '#4F46E5'; // Indigo color line
+        // Shuffle and set items
+        const shuffledLeft = [...data].sort(() => Math.random() - 0.5);
+        const shuffledRight = [...data].sort(() => Math.random() - 0.5);
+        setLeftItems(shuffledLeft);
+        setRightItems(shuffledRight);
+    }, [data]);
 
-        // Purani lines draw karna
-        lines.forEach(line => {
-            ctx.beginPath();
-            ctx.moveTo(line.x1, line.y1);
-            ctx.lineTo(line.x2, line.y2);
-            ctx.stroke();
-        });
+    const playSound = (text) => {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = type === 'urdu' ? 'ur-PK' : 'en-US';
+        window.speechSynthesis.speak(utterance);
+    };
 
-        // Jo line abhi draw ho rahi hai
-        if (currentLine) {
-            ctx.beginPath();
-            ctx.moveTo(currentLine.x1, currentLine.y1);
-            ctx.lineTo(currentLine.x2, currentLine.y2);
-            ctx.stroke();
+    const handleMatch = (rightItem) => {
+        if (!selectedLeft) return;
+
+        if (selectedLeft.id === rightItem.id) {
+            // Success Case
+            setMatches(prev => ({ ...prev, [selectedLeft.id]: rightItem.id }));
+            setFeedback('success');
+            playSound(selectedLeft.label);
+            if (Object.keys(matches).length + 1 === data.length) {
+                confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+            }
+        } else {
+            // Fail Case
+            setFeedback('fail');
         }
-    }, [lines, currentLine]);
 
-    const handleMouseDown = (e) => {
-        const rect = canvasRef.current.getBoundingClientRect();
-        setIsDrawing(true);
-        setCurrentLine({
-            x1: e.clientX - rect.left,
-            y1: e.clientY - rect.top,
-            x2: e.clientX - rect.left,
-            y2: e.clientY - rect.top
-        });
-    };
-
-    const handleMouseMove = (e) => {
-        if (!isDrawing) return;
-        const rect = canvasRef.current.getBoundingClientRect();
-        setCurrentLine(prev => ({
-            ...prev,
-            x2: e.clientX - rect.left,
-            y2: e.clientY - rect.top
-        }));
-    };
-
-    const handleMouseUp = () => {
-        if (currentLine) setLines([...lines, currentLine]);
-        setIsDrawing(false);
-        setCurrentLine(null);
+        setTimeout(() => {
+            setFeedback(null);
+            setSelectedLeft(null);
+        }, 800);
     };
 
     return (
-        <div className="min-h-screen bg-blue-50 flex flex-col items-center p-4">
-            <NavBar themeColor="text-indigo-900" backPath="/matching-hub" />
-            
-            <h1 className="text-4xl font-black text-indigo-900 my-8 uppercase italic">
-                Match {type}!
-            </h1>
+        <div className="w-full max-w-4xl mx-auto p-4 relative">
+            {/* Feedback Animations */}
+            <AnimatePresence>
+                {feedback && (
+                    <motion.div 
+                        initial={{ scale: 0, opacity: 0 }}
+                        animate={{ scale: 1.2, opacity: 1 }}
+                        exit={{ scale: 0, opacity: 0 }}
+                        className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none"
+                    >
+                        <span className="text-9xl">
+                            {feedback === 'success' ? '🌟' : '❌'}
+                        </span>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
-            <div className="relative bg-white rounded-[40px] shadow-2xl p-12 flex justify-between w-full max-w-4xl h-[550px] border-8 border-white">
+            <div className="grid grid-cols-2 gap-20 md:gap-40 items-center justify-center">
                 {/* Left Column */}
-                <div className="flex flex-col justify-around z-10">
-                    {data.left.map(item => (
-                        <div key={item} className="w-20 h-20 bg-indigo-500 rounded-full flex items-center justify-center text-4xl text-white font-bold shadow-lg border-4 border-white">
-                            {item}
-                        </div>
+                <div className="flex flex-col gap-6">
+                    {leftItems.map((item) => (
+                        <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            key={item.id}
+                            disabled={matches[item.id]}
+                            onClick={() => { setSelectedLeft(item); playSound(item.label); }}
+                            className={`p-6 rounded-3xl text-3xl font-bold shadow-xl border-4 transition-all
+                                ${matches[item.id] ? 'bg-green-100 border-green-500 opacity-50' : 
+                                selectedLeft?.id === item.id ? 'bg-indigo-500 text-white border-white scale-110' : 'bg-white border-indigo-200'}`}
+                        >
+                            {item.content}
+                        </motion.button>
                     ))}
                 </div>
 
-                {/* Draw Canvas (In ke darmiyan line khinchne ke liye) */}
-                <canvas 
-                    ref={canvasRef}
-                    width={500}
-                    height={450}
-                    onMouseDown={handleMouseDown}
-                    onMouseMove={handleMouseMove}
-                    onMouseUp={handleMouseUp}
-                    className="absolute inset-0 mx-auto z-20 cursor-crosshair"
-                />
-
                 {/* Right Column */}
-                <div className="flex flex-col justify-around z-10">
-                    {data.right.map(item => (
-                        <div key={item} className="w-20 h-20 bg-pink-500 rounded-full flex items-center justify-center text-4xl text-white font-bold shadow-lg border-4 border-white">
-                            {item}
-                        </div>
+                <div className="flex flex-col gap-6">
+                    {rightItems.map((item) => (
+                        <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            key={item.id}
+                            disabled={Object.values(matches).includes(item.id)}
+                            onClick={() => handleMatch(item)}
+                            className={`p-6 rounded-3xl text-3xl font-bold shadow-xl border-4 transition-all
+                                ${Object.values(matches).includes(item.id) ? 'bg-green-100 border-green-500 opacity-50' : 'bg-white border-indigo-200'}`}
+                        >
+                            {item.matchContent}
+                        </motion.button>
                     ))}
                 </div>
             </div>
-
-            <button 
-                onClick={() => setLines([])}
-                className="mt-8 bg-red-500 text-white px-8 py-3 rounded-full font-bold shadow-lg hover:bg-red-600 transition-all"
-            >
-                CLEAR BOARD
-            </button>
         </div>
     );
-}
+};
+
+export default MatchingGame;
