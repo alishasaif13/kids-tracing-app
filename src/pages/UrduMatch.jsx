@@ -14,7 +14,7 @@ export default function UrduMatch() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-indigo-200 via-cyan-100 to-purple-200 p-4">
-            <NavBar backPath="/matching-hub" />
+           
             <div className="max-w-5xl mx-auto flex flex-col items-center font-urdu">
                 <header className="text-center mb-8">
                     <h1 className="text-5xl md:text-6xl font-extrabold text-indigo-900 drop-shadow-md">

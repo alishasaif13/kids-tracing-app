@@ -1,7 +1,5 @@
-import React from 'react';
+import React, { useEffect } from 'react'; // useEffect add kiya
 import AlphabetCard from '../components/AlphabetsCard';
-import NavBar from '../components/Navbar';
-
 export default function LearningAlphabets() {
     const alphabets = Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i));
 
@@ -17,16 +15,34 @@ export default function LearningAlphabets() {
         window.speechSynthesis.speak(utterance);
     };
 
+    // Keyboard Support Logic
+    useEffect(() => {
+        const handleKeyDown = (event) => {
+            const key = event.key.toUpperCase(); // Takki 'a' aur 'A' dono se sound chale
+            
+            // Check karein ke dabi hui key A-Z ke darmiyan hai ya nahi
+            if (key >= 'A' && key <= 'Z' && key.length === 1) {
+                playSound(key);
+            }
+        };
+
+        // Window par listener lagaya
+        window.addEventListener('keydown', handleKeyDown);
+
+        // Cleanup: Jab user page se jaye toh listener khatam ho jaye
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, []); // Empty array ka matlab hai ye sirf page load hone pe chalega
+
     return (
         <div className="min-h-screen flex flex-col items-center bg-gradient-to-br from-indigo-200 via-cyan-100 to-purple-200 p-4 md:p-8">
-            <NavBar themeColor="text-indigo-900" backPath="/learning-hub" />
-            
             <header className="text-center mt-3 mb-8">
                 <h1 className="text-4xl md:text-6xl font-extrabold text-indigo-900 tracking-tight drop-shadow-md">
                     Learn Alphabets
                 </h1>
                 <p className="text-lg text-indigo-700 font-medium mt-2">
-                    Click a letter to hear its sound! 
+                    Click a letter or press your keyboard to hear its sound! 
                 </p>
             </header>
 

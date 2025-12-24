@@ -42,9 +42,8 @@ export default function UrduPage() {
                   .urdu-font { font-family: 'Noto Nastaliq Urdu', serif; }`}
             </style>
 
-            <NavBar themeColor="text-indigo-900" backPath="/learning-hub"/>
             
-            <header className="text-center mt-6 mb-10 urdu-font">
+            <header className="text-center mt-0 mb-10 urdu-font">
                 <h1 className="text-5xl md:text-6xl font-extrabold text-indigo-900 drop-shadow-md mb-4">
                     اردو حروفِ تہجی
                 </h1>

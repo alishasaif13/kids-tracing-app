@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react'; // useEffect add kiya
 import { useNavigate } from 'react-router-dom';
 import AlphabetCard from '../components/AlphabetsCard';
-import NavBar from '../components/Navbar'; 
+
 
 const generateNumbers = () => {
     return Array.from({ length: 20 }, (_, i) => String(i + 1)); 
@@ -16,16 +16,36 @@ export default function CountingPage() {
         navigate(`/trace/${categoryId}/${item}`); 
     };
 
+    // Keyboard Support Logic
+    useEffect(() => {
+        const handleKeyDown = (event) => {
+            const key = event.key;
+
+            // Agar user single digit (1-9) dabaye
+            if (key >= '1' && key <= '9' && !event.ctrlKey && !event.altKey) {
+                handleItemClick(key);
+            }
+            if (key === '0') {
+                handleItemClick('10');
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [navigate]); 
+
     return (
         <div className="min-h-screen flex flex-col items-center bg-gradient-to-br from-indigo-200 via-cyan-100 to-purple-200 p-4 md:p-8">
-          <NavBar themeColor="text-indigo-900" backPath="/categories" />
-
+            
             <header className="text-center mt-3 mb-8">
                 <h1 className="text-4xl md:text-6xl font-extrabold text-indigo-900 tracking-tight drop-shadow-md">
                     Trace the Numbers
                 </h1>
                 <p className="text-lg text-indigo-700 font-semibold mt-2">
-                    Pick a number from 1 to 20!
+                    Pick a number or use keyboard 
                 </p>
             </header>
             
@@ -40,8 +60,6 @@ export default function CountingPage() {
                     ))}
                 </div>
             </div>
-
-           
         </div>
     );
 }

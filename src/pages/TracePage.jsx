@@ -33,7 +33,7 @@ export default function TracePage() {
 
     return (
         <div className="h-screen max-h-screen flex flex-col items-center bg-gradient-to-br from-indigo-200 via-cyan-100 to-purple-200 p-2 md:p-4 overflow-hidden">
-            <NavBar themeColor="text-indigo-900" backPath={backPath} />
+         
 
             {/* HEADER */}
             <header className="text-center mt-5 mb-2">

@@ -15,7 +15,7 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-indigo-200 via-cyan-100 to-purple-200 p-4">
       
-      <header className="text-center mb-8 relative z-10">
+      <header className="mt-0 text-center mb-8 relative z-10">
         <h1 className="text-5xl md:text-7xl font-extrabold text-indigo-900 tracking-tight drop-shadow-md">
           Kids Fun Hub!
         </h1>

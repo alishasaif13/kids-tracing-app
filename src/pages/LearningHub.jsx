@@ -13,9 +13,9 @@ export default function LearningHub() {
 
     return (
         <div className="min-h-screen flex flex-col items-center bg-gradient-to-br from-indigo-200 via-cyan-100 to-purple-200 p-4 md:p-8">
-            <NavBar themeColor="text-indigo-900" backPath="/" />
+           
             
-            <header className="text-center mt-6 mb-10">
+            <header className="text-center mt-0 mb-10">
                 <h1 className="text-5xl md:text-7xl font-extrabold text-indigo-900 tracking-tight drop-shadow-md">
                     Learning Hub
                 </h1>

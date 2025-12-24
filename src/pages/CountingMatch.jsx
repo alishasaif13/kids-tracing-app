@@ -14,7 +14,7 @@ export default function CountingMatch() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-indigo-200 via-cyan-100 to-purple-200 p-4 flex flex-col items-center">
-            <NavBar backPath="/matching-hub" />
+           
             <header className="text-center mb-6">
                 <h1 className="text-4xl md:text-5xl font-extrabold text-indigo-900 drop-shadow-sm">
                     Number Match

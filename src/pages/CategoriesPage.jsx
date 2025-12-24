@@ -31,7 +31,7 @@ export default function CategoriesPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center bg-gradient-to-br from-indigo-200 via-cyan-100 to-purple-200 p-6">
-      <NavBar themeColor="text-indigo-900" />
+   
       
       <header className="text-center mt-10 mb-10">
         <h1 className="text-5xl md:text-7xl font-extrabold text-indigo-900 tracking-tight drop-shadow-lg">
