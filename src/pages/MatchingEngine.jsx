@@ -1,172 +1,183 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import confetti from 'canvas-confetti';
+import React, { useRef, useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import confetti from "canvas-confetti";
 
-export default function MatchingEngine({ leftItems = [], rightItems = [] }) {
-    const [matches, setMatches] = useState({});
-    const [isDragging, setIsDragging] = useState(false);
-    const [currentLine, setCurrentLine] = useState(null);
-    const [completedLines, setCompletedLines] = useState([]);
-    const [shuffledRight, setShuffledRight] = useState([]);
-    const [feedback, setFeedback] = useState(null);
-    
-    const containerRef = useRef(null);
-    const canvasRef = useRef(null);
+export default function MatchingEngine({ leftItems, rightItems }) {
+  const containerRef = useRef(null);
+  const canvasRef = useRef(null);
 
-    const playSound = (isSuccess) => {
-        try {
-            const audio = new Audio(isSuccess ? "/sounds/success.mp3" : "/sounds/tryagain.mp3");
-            audio.play().catch(() => {});
-        } catch (e) {}
+  const [lines, setLines] = useState([]);
+  const [active, setActive] = useState(null);
+  const [result, setResult] = useState(null);
+
+  // ---------- CANVAS ----------
+  useEffect(() => {
+    const resize = () => {
+      if (!canvasRef.current || !containerRef.current) return;
+      canvasRef.current.width = containerRef.current.offsetWidth;
+      canvasRef.current.height = containerRef.current.offsetHeight;
+      draw();
     };
+    resize();
+    window.addEventListener("resize", resize);
+    return () => window.removeEventListener("resize", resize);
+  }, [lines, active]);
 
-    useEffect(() => {
-        setShuffledRight([...rightItems].sort(() => Math.random() - 0.5));
-    }, [rightItems]);
+  const draw = () => {
+    const ctx = canvasRef.current.getContext("2d");
+    ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
 
-    useEffect(() => {
-        const resizeCanvas = () => {
-            if (canvasRef.current && containerRef.current) {
-                canvasRef.current.width = containerRef.current.offsetWidth;
-                canvasRef.current.height = containerRef.current.offsetHeight;
-                drawAll();
-            }
-        };
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
-        return () => window.removeEventListener('resize', resizeCanvas);
-    }, [currentLine, completedLines, matches]);
+    ctx.lineWidth = 6;
+    ctx.lineCap = "round";
 
-    const drawAll = () => {
-        const ctx = canvasRef.current?.getContext('2d');
-        if (!ctx) return;
-        ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-        ctx.lineCap = 'round';
-        ctx.lineWidth = 6;
+    lines.forEach((l) => {
+      ctx.strokeStyle = "#4f46e5";
+      ctx.beginPath();
+      ctx.moveTo(l.x1, l.y1);
+      ctx.lineTo(l.x2, l.y2);
+      ctx.stroke();
+    });
 
-        // Perfect Accurate Lines for Completed Matches
-        completedLines.forEach(line => {
-            ctx.strokeStyle = '#22c55e';
-            ctx.shadowBlur = 5; ctx.shadowColor = '#22c55e';
-            ctx.beginPath();
-            ctx.moveTo(line.x1, line.y1);
-            ctx.lineTo(line.x2, line.y2);
-            ctx.stroke();
-        });
+    if (active) {
+      ctx.setLineDash([8, 8]);
+      ctx.strokeStyle = "#6366f1";
+      ctx.beginPath();
+      ctx.moveTo(active.x1, active.y1);
+      ctx.lineTo(active.x2, active.y2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  };
 
-        // Dynamic Line while dragging
-        if (currentLine) {
-            ctx.strokeStyle = '#6366f1';
-            ctx.shadowBlur = 10; ctx.shadowColor = '#6366f1';
-            ctx.beginPath();
-            ctx.moveTo(currentLine.startX, currentLine.startY);
-            ctx.lineTo(currentLine.endX, currentLine.endY);
-            ctx.stroke();
-        }
+  const center = (el) => {
+    const r = el.getBoundingClientRect();
+    const c = containerRef.current.getBoundingClientRect();
+    return {
+      x: r.left + r.width / 2 - c.left,
+      y: r.top + r.height / 2 - c.top,
     };
+  };
 
-    const getElementCenter = (el) => {
-        const rect = el.getBoundingClientRect();
-        const containerRect = containerRef.current.getBoundingClientRect();
-        return {
-            x: (rect.left + rect.width / 2) - containerRect.left,
-            y: (rect.top + rect.height / 2) - containerRect.top
-        };
-    };
+  // ---------- DRAW ----------
+  const start = (item, side, e) => {
+    const dot = e.currentTarget.querySelector(".dot");
+    const { x, y } = center(dot);
+    setActive({ from: item.id, side, x1: x, y1: y, x2: x, y2: y });
+  };
 
-    const handleStart = (item, e) => {
-        if (matches[item.id]) return;
-        const dotEl = e.currentTarget.nextSibling; // Gets the dot element
-        const coords = getElementCenter(dotEl);
-        setCurrentLine({ id: item.id, startX: coords.x, startY: coords.y, endX: coords.x, endY: coords.y });
-        setIsDragging(true);
-    };
+  const move = (e) => {
+    if (!active) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+    const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+    setActive((p) => ({ ...p, x2: x, y2: y }));
+    draw();
+  };
 
-    const handleMove = (e) => {
-        if (!isDragging || !currentLine) return;
-        const rect = containerRef.current.getBoundingClientRect();
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-        setCurrentLine(prev => ({ 
-            ...prev, 
-            endX: clientX - rect.left, 
-            endY: clientY - rect.top 
-        }));
-        drawAll();
-    };
+  const end = (item, side, e) => {
+    if (!active || active.side === side) {
+      setActive(null);
+      return;
+    }
 
-    const handleEnd = (targetItem, e) => {
-        if (!isDragging || !currentLine) return;
+    const dot = e.currentTarget.querySelector(".dot");
+    const { x, y } = center(dot);
 
-        if (targetItem && currentLine.id === targetItem.id) {
-            // SNAP LOGIC: Get exact center of the target dot
-            const targetDot = e.currentTarget.previousSibling;
-            const targetCoords = getElementCenter(targetDot);
+    setLines((prev) => [
+      ...prev,
+      { from: active.from, to: item.id, x1: active.x1, y1: active.y1, x2: x, y2: y },
+    ]);
 
-            setCompletedLines(prev => [...prev, { 
-                x1: currentLine.startX, y1: currentLine.startY, 
-                x2: targetCoords.x, y2: targetCoords.y 
-            }]);
-            
-            setMatches(prev => ({ ...prev, [currentLine.id]: true }));
-            setFeedback('success');
-            playSound(true);
-            if (Object.keys(matches).length + 1 === leftItems.length) confetti();
-        } else {
-            setFeedback('fail');
-            playSound(false);
-        }
+    setActive(null);
+  };
 
-        setCurrentLine(null);
-        setIsDragging(false);
-        setTimeout(() => setFeedback(null), 1000);
-    };
+  // ---------- CHECK RESULT ----------
+  const checkResult = () => {
+    let usedLeft = new Set();
+    let usedRight = new Set();
+    let correct = 0;
 
-    return (
-        <div className="w-full max-w-2xl flex flex-col items-center">
-            <AnimatePresence>
-                {feedback && (
-                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} className="fixed top-1/4 z-50">
-                        <div className={`px-8 py-3 rounded-2xl shadow-xl border-4 bg-white font-black text-2xl ${feedback === 'success' ? 'border-green-400 text-green-500' : 'border-red-400 text-red-500'}`}>
-                            {feedback === 'success' ? 'EXCELLENT! 🌟' : 'TRY AGAIN! ❌'}
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+    lines.forEach((l) => {
+      if (l.from === l.to && !usedLeft.has(l.from) && !usedRight.has(l.to)) {
+        correct++;
+        usedLeft.add(l.from);
+        usedRight.add(l.to);
+      }
+    });
 
-            <div ref={containerRef} onMouseMove={handleMove} onTouchMove={handleMove}
-                className="relative w-full bg-white/70 backdrop-blur-md rounded-[40px] border-4 border-white shadow-2xl p-8 md:p-10 min-h-[400px] flex items-center touch-none overflow-hidden">
-                
-                <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none z-20" />
+    setResult({ correct, total: leftItems.length });
 
-                <div className="grid grid-cols-2 w-full gap-x-20 md:gap-x-32 relative z-10">
-                    <div className="flex flex-col justify-center gap-5">
-                        {leftItems.map(item => (
-                            <div key={item.id} className="relative flex items-center">
-                                <div onMouseDown={(e) => handleStart(item, e)} onTouchStart={(e) => handleStart(item, e)}
-                                    className={`h-14 flex-1 flex items-center justify-center text-2xl font-black rounded-2xl border-b-4 transition-all cursor-pointer select-none
-                                    ${matches[item.id] ? 'bg-green-500 border-green-700 text-white' : 'bg-white border-indigo-100 text-indigo-900 shadow-sm'}`}>
-                                    {item.content}
-                                </div>
-                                <div className={`w-4 h-4 rounded-full absolute -right-2 top-1/2 -translate-y-1/2 border-2 border-white shadow-sm z-30 ${matches[item.id] ? 'bg-green-600' : 'bg-indigo-400 pulse'}`} />
-                            </div>
-                        ))}
-                    </div>
+    if (correct === leftItems.length) {
+      new Audio("/sounds/success.mp3").play();
+      confetti({ particleCount: 120, spread: 70 });
+    } else {
+      new Audio("/sounds/tryagain.mp3").play();
+    }
+  };
 
-                    <div className="flex flex-col justify-center gap-5">
-                        {shuffledRight.map(item => (
-                            <div key={item.id} className="relative flex items-center">
-                                <div className={`w-4 h-4 rounded-full absolute -left-2 top-1/2 -translate-y-1/2 border-2 border-white shadow-sm z-30 ${matches[item.id] ? 'bg-green-600' : 'bg-indigo-400 pulse'}`} />
-                                <div onMouseUp={(e) => handleEnd(item, e)} onTouchEnd={(e) => handleEnd(item, e)}
-                                    className={`h-14 flex-1 flex items-center justify-center text-2xl font-black rounded-2xl border-b-4 transition-all select-none
-                                    ${matches[item.id] ? 'bg-green-50 text-green-200 border-green-100' : 'bg-white border-indigo-100 text-indigo-900 shadow-sm'}`}>
-                                    {item.match}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
+  return (
+    <div className="w-full flex flex-col items-center">
+      <div
+        ref={containerRef}
+        onMouseMove={move}
+        onTouchMove={move}
+        className="relative w-full max-w-5xl bg-white rounded-[40px] p-10 shadow-2xl"
+      >
+        <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none" />
+
+        <div className="grid grid-cols-2 gap-24 relative z-10">
+          {/* LEFT */}
+          <div className="flex flex-col gap-6">
+            {leftItems.map((i) => (
+              <div
+                key={i.id}
+                onMouseDown={(e) => start(i, "left", e)}
+                onTouchStart={(e) => start(i, "left", e)}
+                className="relative bg-indigo-100 rounded-xl p-4 text-center font-black text-xl cursor-pointer"
+              >
+                {i.content}
+                <span className="dot absolute right-[-10px] top-1/2 -translate-y-1/2 w-4 h-4 bg-indigo-500 rounded-full" />
+              </div>
+            ))}
+          </div>
+
+          {/* RIGHT */}
+          <div className="flex flex-col gap-6">
+            {rightItems.map((i) => (
+              <div
+                key={i.id}
+                onMouseUp={(e) => end(i, "right", e)}
+                onTouchEnd={(e) => end(i, "right", e)}
+                className="relative bg-pink-100 rounded-xl p-4 text-center font-black text-xl cursor-pointer"
+              >
+                <span className="dot absolute left-[-10px] top-1/2 -translate-y-1/2 w-4 h-4 bg-pink-500 rounded-full" />
+                {i.match}
+              </div>
+            ))}
+          </div>
         </div>
-    );
+      </div>
+
+      {/* BUTTON */}
+      <button
+        onClick={checkResult}
+        className="mt-6 px-10 py-4 bg-green-500 text-white text-xl font-extrabold rounded-2xl shadow-lg hover:scale-105 transition"
+      >
+        Check Result
+      </button>
+
+      {/* RESULT */}
+      <AnimatePresence>
+        {result && (
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            className="mt-6 text-3xl font-black text-indigo-700"
+          >
+            Correct: {result.correct} / {result.total}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
 }

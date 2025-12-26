@@ -13,17 +13,17 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-indigo-200 via-cyan-100 to-purple-200 p-4">
+  <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-indigo-200 via-cyan-100 to-purple-200 p-4 pt-10">
       
-      <header className="mt-0 text-center mb-8 relative z-10">
+      {/* Header section - mb-8 ko thoda kam bhi kar sakti hain agar mazeed gap kam karna ho */}
+      <header className="text-center mb-6 relative z-10">
         <h1 className="text-5xl md:text-7xl font-extrabold text-indigo-900 tracking-tight drop-shadow-md">
           Kids Fun Hub!
         </h1>
-        <p className="text-xl text-indigo-700 font-semibold mt-3">
+        <p className="text-xl text-indigo-700 font-semibold mt-2">
           Choose a fun way to learn!
         </p>
       </header>
-
       {/* Main Container for 3 Modes */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl w-full px-4">
         {modes.map((mode) => (
