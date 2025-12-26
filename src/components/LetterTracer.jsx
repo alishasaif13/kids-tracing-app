@@ -79,7 +79,7 @@ const TARGET_POINTS = [
 ];
 
 const DISTANCE_THRESHOLD = 20;   // allowed distance from path
-const MIN_COVERAGE = 20;         // % of path must be covered
+const MIN_COVERAGE = 80;         // % of path must be covered
 const MAX_OFF_PATH = 10;         // % drawing allowed off-path
 
 export default function LetterTracer() {
