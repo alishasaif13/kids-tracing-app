@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 
 const distance = (a, b) => {
-    Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);
+    return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);
 };
 
 const calculateAccuracy = (drawnPoints, targetPoints) => {
@@ -64,22 +64,29 @@ const LETTER_PATH = "M50 150 L100 50 L150 150 M75 100 L125 100";
 
 const TARGET_POINTS = [
     { x: 50, y: 150 },
-    { x: 75, y: 100 },
+    { x: 60, y: 125 },
+    { x: 70, y: 100 },
+    { x: 80, y: 75 },
+    { x: 90, y: 60 },
     { x: 100, y: 50 },
-    { x: 125, y: 100 },
+    { x: 110, y: 60 },
+    { x: 120, y: 75 },
+    { x: 130, y: 100 },
+    { x: 140, y: 125 },
     { x: 150, y: 150 },
     { x: 75, y: 100 },
     { x: 125, y: 100 },
 ];
 
-const DISTANCE_THRESHOLD = 10;   // allowed distance from path
-const MIN_COVERAGE = 70;         // % of path must be covered
-const MAX_OFF_PATH = 30;         // % drawing allowed off-path
+const DISTANCE_THRESHOLD = 20;   // allowed distance from path
+const MIN_COVERAGE = 20;         // % of path must be covered
+const MAX_OFF_PATH = 10;         // % drawing allowed off-path
 
 export default function LetterTracer() {
     const svgRef = useRef(null);
     const [drawing, setDrawing] = useState(false);
-    const [points, setPoints] = useState([]);
+    const [strokes, setStrokes] = useState([]);
+    const [currentPoints, setCurrentPoints] = useState([]);
     const [accuracy, setAccuracy] = useState(null);
     const [result, setResult] = useState(null);
 
@@ -94,37 +101,50 @@ export default function LetterTracer() {
 
     const handleDown = (e) => {
         setDrawing(true);
-        setPoints([getPoint(e)]);
+        setCurrentPoints([getPoint(e)]); // new stroke starts
     };
 
     const handleMove = (e) => {
         if (!drawing) return;
-        setPoints((prev) => [...prev, getPoint(e)]);
+        setCurrentPoints((prev) => [...prev, getPoint(e)]);
     };
 
     const handleUp = () => {
         setDrawing(false);
-
-        const score = calculateAccuracy(points, TARGET_POINTS);
-        setAccuracy(score);
+        setStrokes((prev) => [...prev, currentPoints]); // save stroke
+        setCurrentPoints([]); // reset current stroke
     };
 
     const checkResult = () => {
+        const allPoints = strokes.flat().concat(currentPoints);
+        if (!allPoints.length) return;
+
+        const accuracyScore = calculateAccuracy(allPoints, TARGET_POINTS);
         const { coverage, offPath } = evaluateTrace(
-            points,
-            TARGET_POINTS
+            allPoints,
+            TARGET_POINTS,
+            DISTANCE_THRESHOLD
         );
 
         const pass =
-            coverage >= 70 && offPath <= 30;
+            coverage >= MIN_COVERAGE &&
+            offPath <= MAX_OFF_PATH;
 
+        setAccuracy(accuracyScore);
         setResult({
             coverage: Math.round(coverage),
             offPath: Math.round(offPath),
             pass,
         });
+        if (allPoints.length > 800) {
+            setResult({
+                coverage: 0,
+                offPath: 100,
+                pass: false,
+            });
+            return;
+        }
     };
-
 
     return (
         <div className="flex flex-col items-center gap-4">
@@ -146,14 +166,28 @@ export default function LetterTracer() {
                     strokeDasharray="5 8"
                 />
 
-                {/* User Drawing */}
-                <polyline
-                    points={points.map((p) => `${p.x},${p.y}`).join(" ")}
-                    fill="none"
-                    stroke="blue"
-                    strokeWidth="5"
-                    strokeLinecap="round"
-                />
+                {/* Draw all previous strokes */}
+                {strokes.map((stroke, i) => (
+                    <polyline
+                        key={i}
+                        points={stroke.map((p) => `${p.x},${p.y}`).join(" ")}
+                        fill="none"
+                        stroke="blue"
+                        strokeWidth="5"
+                        strokeLinecap="round"
+                    />
+                ))}
+
+                {/* Draw current stroke */}
+                {currentPoints.length > 0 && (
+                    <polyline
+                        points={currentPoints.map((p) => `${p.x},${p.y}`).join(" ")}
+                        fill="none"
+                        stroke="blue"
+                        strokeWidth="5"
+                        strokeLinecap="round"
+                    />
+                )}
             </svg>
 
             {accuracy !== null && (
@@ -186,11 +220,17 @@ export default function LetterTracer() {
             </button>
 
             <button
-                onClick={() => setPoints([])}
+                onClick={() => {
+                    setStrokes([]);
+                    setCurrentPoints([]);
+                    setAccuracy(null);
+                    setResult(null);
+                }}
                 className="px-4 py-2 bg-red-500 text-white rounded"
             >
                 Reset
             </button>
+
         </div>
     );
 }
