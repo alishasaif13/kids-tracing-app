@@ -18,8 +18,8 @@ const PATH_DATA = {
   O: "M160 55 C100 55 80 120 80 185 C80 250 100 315 160 315 C220 315 240 250 240 185 C240 120 220 55 160 55 Z",
   P: "M75 315 L75 55 L165 55 C215 55 215 155 165 155 L75 155",
   Q: "M150 55 C85 55 85 185 85 185 C85 315 150 315 150 315 C215 315 215 185 215 185 C215 55 150 55 150 55 Z M175 255 L225 315",
- R: "M75 315 L75 55 L165 55 C215 55 215 155 165 155 L75 155 M75 155 L225 315",
-  S:"M220 95 C220 55 100 55 100 135 C100 185 220 185 220 235 C220 315 100 315 100 275",
+  R: "M75 315 L75 55 L165 55 C215 55 215 155 165 155 L75 155 M75 155 L225 315",
+  S: "M220 95 C220 55 100 55 100 135 C100 185 220 185 220 235 C220 315 100 315 100 275",
   T: "M75 55 L225 55 M150 55 L150 315",
   U: "M75 55 L75 265 C75 315 135 315 150 315 C165 315 225 315 225 265 L225 55",
   V: "M75 55 L150 315 L225 55",
@@ -29,7 +29,7 @@ const PATH_DATA = {
   Z: "M75 55 L225 55 L75 315 L225 315",
 
   // --- NUMBERS (Scaled to 55-315 range to match Alphabets) ---
- 1: "M150 55 L150 315 M120 85 L150 55",
+  1: "M150 55 L150 315 M120 85 L150 55",
   2: "M90 100 C90 55 230 55 230 130 C230 190 170 240 90 315 L230 315",
   3: "M100 85 C100 45 220 45 220 125 C220 155 190 185 160 185 M160 185 C200 185 230 215 230 265 C230 325 100 325 100 275",
   4: "M200 55 L80 230 L240 230 M200 55 L200 315",
@@ -37,7 +37,7 @@ const PATH_DATA = {
   6: "M210 80 C150 50 90 120 90 200 C90 290 230 290 230 215 C230 155 90 160 90 215",
   7: "M90 55 L230 55 L150 315",
   8: "M160 185 C110 185 100 135 100 105 C100 65 130 55 160 55 C190 55 220 65 220 105 C220 135 210 185 160 185 Z M160 185 C110 185 85 235 85 265 C85 315 120 325 160 325 C200 325 235 315 235 265 C235 235 210 185 160 185 Z",
-  9:  "M200 135 C200 65 110 65 110 135 C110 195 200 195 200 135 L200 315",
+  9: "M200 135 C200 65 110 65 110 135 C110 195 200 195 200 135 L200 315",
 
   // --- Double Digits (Narrow & Re-balanced for spacing) ---
   10: "M95 55 L95 315 M210 55 C165 55 155 110 155 185 C155 260 165 315 210 315 C255 315 265 260 265 185 C265 110 255 55 210 55 Z",
@@ -151,7 +151,8 @@ export default function TracingCanvas({
     if (!pathEl) return;
 
     const length = pathEl.getTotalLength();
-    const samples = 150;
+    // Increased to 300 points to ensure a continuous "hit" zone
+    const samples = 300;
     const pts = [];
     for (let i = 0; i <= samples; i++) {
       const p = pathEl.getPointAtLength((i / samples) * length);
@@ -164,7 +165,7 @@ export default function TracingCanvas({
     setCompleted(false);
     setShowSuccessAnimation(false);
     setShowFailureAnimation(false);
-  }, [currentPath]); // currentPath dependency is crucial
+  }, [currentPath]);
 
   useEffect(() => {
     if (pathRef.current) {
@@ -227,32 +228,73 @@ export default function TracingCanvas({
       return;
     }
 
-    const updated = targetPoints.map((p) => ({ ...p, hit: false }));
+    const updatedTargetPoints = targetPoints.map((p) => ({ ...p }));
+    let totalUserPoints = 0;
+    let messyPoints = 0;
+
+    // --- CALIBRATION SETTINGS ---
+    const hitTolerance = 20;    // Distance to "fill in" a dot
+    const messThreshold = 45;   // Distance beyond which a point is a "mess"
+    const requiredCoverage = 0.90; // 90% of the letter must be covered
+    const allowedMessRatio = 0.10; // Only 10% of drawing can be "messy"
 
     allStrokes.forEach((stroke) => {
-      stroke.forEach((pt) => {
-        updated.forEach((t) => {
-          const dx = t.x - pt.x;
-          const dy = t.y - pt.y;
-          if (dx * dx + dy * dy <= tolerance * tolerance) t.hit = true;
-        });
-      });
+      // We check every 2nd point for a good balance of speed and accuracy
+      for (let i = 0; i < stroke.length; i += 2) {
+        const userPt = stroke[i];
+        totalUserPoints++;
+
+        let minDistanceToLetter = Infinity;
+
+        // Check distance against every point on the target path
+        for (let t of updatedTargetPoints) {
+          const dx = t.x - userPt.x;
+          const dy = t.y - userPt.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < minDistanceToLetter) {
+            minDistanceToLetter = dist;
+          }
+
+          // If this point is close enough to a target dot, mark it hit
+          if (dist <= hitTolerance) {
+            t.hit = true;
+          }
+        }
+
+        // If the user point is further than 45px from ANY part of the letter, it's a mess
+        if (minDistanceToLetter > messThreshold) {
+          messyPoints++;
+        }
+      }
     });
 
-    const hitCount = updated.filter((p) => p.hit).length;
-    const accuracy = hitCount / updated.length;
+    const hitCount = updatedTargetPoints.filter((p) => p.hit).length;
+    const coverage = hitCount / updatedTargetPoints.length;
+    const messRatio = messyPoints / totalUserPoints;
 
-    if (accuracy >= successThreshold) {
+    // Debugging logs to help you fine-tune
+    console.log(`Coverage: ${(coverage * 100).toFixed(1)}% | Mess: ${(messRatio * 100).toFixed(1)}%`);
+
+    const isCovered = coverage >= requiredCoverage;
+    const isClean = messRatio <= allowedMessRatio;
+
+    if (isCovered && isClean) {
       playSuccessSound();
       setShowSuccessAnimation(true);
-      setTimeout(() => setShowSuccessAnimation(false), 2500);
       setCompleted(true);
+      setTimeout(() => setShowSuccessAnimation(false), 2500);
     } else {
       playFailureSound();
       setShowFailureAnimation(true);
       setTimeout(() => setShowFailureAnimation(false), 2500);
+
+      // Feedback logic (optional)
+      if (!isCovered) console.log("Try to trace the whole letter!");
+      if (!isClean) console.log("Too much scribbling outside the lines!");
     }
-    setTargetPoints(updated);
+
+    setTargetPoints(updatedTargetPoints);
   };
 
   // Handler for the Check Button
@@ -281,11 +323,10 @@ export default function TracingCanvas({
   return (
     <div className="w-full px-4 sm:px-6 md:px-10 mx-auto flex flex-col items-center">
       <div
-        className={`relative w-full mx-auto bg-white/90 rounded-3xl overflow-hidden transition-all duration-300 ${
-          completed
-            ? "border-green-500 shadow-[0_0_20px_rgba(34,197,94,0.4)] border-8"
-            : "border-cyan-400 border-4 shadow-xl"
-        }`}
+        className={`relative w-full mx-auto bg-white/90 rounded-3xl overflow-hidden transition-all duration-300 ${completed
+          ? "border-green-500 shadow-[0_0_20px_rgba(34,197,94,0.4)] border-8"
+          : "border-cyan-400 border-4 shadow-xl"
+          }`}
         style={{
           /* --- Responsive Logic --- */
           aspectRatio: "300 / 330",
