@@ -15,6 +15,7 @@ import UrduMatch from "./pages/UrduMatch";
 import CountingMatch from "./pages/CountingMatch";
 import ShapeMatch from "./pages/ShapeMatch";
 import AlphabetMatch from "./pages/AlphabetsMatch";
+import New from "./pages/New";
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
           <Route path="/matching/numbers" element={<CountingMatch />} />
           <Route path="/matching/shapes" element={<ShapeMatch />} />
           <Route path="/trace/:categoryId/:item" element={<TracePage />} />
+          <Route path="/new" element={<New />} />
         </Routes>
     </Layout>
     </Router>
