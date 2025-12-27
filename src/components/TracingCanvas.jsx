@@ -73,16 +73,14 @@ const getPathForItem = (item, categoryId) => {
   } else if (categoryId === "numbers") {
     key = item;
   } else if (categoryId === "shapes") {
-    // Shapes ko proper case mein convert karke key use karein
     key = item.charAt(0).toUpperCase() + item.slice(1).toLowerCase();
   } else {
     return null;
   }
-  // PATH_DATA se path nikalna
   return PATH_DATA[key] || null;
 };
 
-// --- SOUND FUNCTIONS (No change) ---
+// --- SOUND FUNCTIONS ---
 const playSuccessSound = () => {
   try {
     const audio = new Audio("/sounds/success.mp3");
@@ -142,16 +140,12 @@ export default function TracingCanvas({
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
   const [showFailureAnimation, setShowFailureAnimation] = useState(false);
 
-  const tolerance = 18;
-  const successThreshold = 0.9;
-
   // --- RESET FUNCTION ---
   const resetCanvas = useCallback(() => {
     const pathEl = pathRef.current;
     if (!pathEl) return;
 
     const length = pathEl.getTotalLength();
-    // Increased to 300 points to ensure a continuous "hit" zone
     const samples = 300;
     const pts = [];
     for (let i = 0; i <= samples; i++) {
@@ -173,7 +167,7 @@ export default function TracingCanvas({
     }
   }, [currentPath, resetCanvas]);
 
-  // --- POINTER/COORDINATE LOGIC (No change) ---
+  // --- POINTER/COORDINATE LOGIC ---
   const getPointer = (e) => {
     const svg = svgRef.current;
     if (!svg) return { x: 0, y: 0 };
@@ -193,7 +187,7 @@ export default function TracingCanvas({
     return pt;
   };
 
-  // --- DRAWING HANDLERS (No change) ---
+  // --- DRAWING HANDLERS ---
   const startDraw = (e) => {
     if (completed) return;
     e.preventDefault();
@@ -219,7 +213,7 @@ export default function TracingCanvas({
     setCurrentStroke([]);
   };
 
-  // --- CHECK ACCURACY LOGIC (No change) ---
+  // --- CHECK ACCURACY LOGIC (WITH SHAPE VERIFICATION) ---
   const checkAccuracy = (allStrokes) => {
     if (allStrokes.length === 0) {
       playFailureSound();
@@ -231,40 +225,64 @@ export default function TracingCanvas({
     const updatedTargetPoints = targetPoints.map((p) => ({ ...p }));
     let totalUserPoints = 0;
     let messyPoints = 0;
+    let shapeMatchCount = 0;
+    let shapeCheckCount = 0;
 
     // --- CALIBRATION SETTINGS ---
-    const hitTolerance = 20;    // Distance to "fill in" a dot
-    const messThreshold = 45;   // Distance beyond which a point is a "mess"
-    const requiredCoverage = 0.90; // 90% of the letter must be covered
-    const allowedMessRatio = 0.10; // Only 10% of drawing can be "messy"
+    const hitTolerance = 20;
+    const messThreshold = 65;
+    const requiredCoverage = 0.90;
+    const allowedMessRatio = 0.10;
+    const requiredShapeMatch = 0.80;
 
     allStrokes.forEach((stroke) => {
-      // We check every 2nd point for a good balance of speed and accuracy
       for (let i = 0; i < stroke.length; i += 2) {
         const userPt = stroke[i];
         totalUserPoints++;
 
         let minDistanceToLetter = Infinity;
+        let closestTargetIndex = -1;
 
-        // Check distance against every point on the target path
-        for (let t of updatedTargetPoints) {
-          const dx = t.x - userPt.x;
-          const dy = t.y - userPt.y;
+        for (let t = 0; t < updatedTargetPoints.length; t++) {
+          const targetPt = updatedTargetPoints[t];
+          const dx = targetPt.x - userPt.x;
+          const dy = targetPt.y - userPt.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
 
           if (dist < minDistanceToLetter) {
             minDistanceToLetter = dist;
+            closestTargetIndex = t;
           }
 
-          // If this point is close enough to a target dot, mark it hit
           if (dist <= hitTolerance) {
-            t.hit = true;
+            targetPt.hit = true;
           }
         }
 
-        // If the user point is further than 45px from ANY part of the letter, it's a mess
         if (minDistanceToLetter > messThreshold) {
           messyPoints++;
+        }
+
+        // --- SHAPE DIRECTION CHECK ---
+        if (i > 0 && closestTargetIndex >= 0 && closestTargetIndex < updatedTargetPoints.length - 5) {
+          const prevUserPt = stroke[i - 2] || stroke[i - 1] || userPt;
+          
+          const userDx = userPt.x - prevUserPt.x;
+          const userDy = userPt.y - prevUserPt.y;
+          const userAngle = Math.atan2(userDy, userDx);
+
+          const nextTargetPt = updatedTargetPoints[closestTargetIndex + 5];
+          const targetDx = nextTargetPt.x - updatedTargetPoints[closestTargetIndex].x;
+          const targetDy = nextTargetPt.y - updatedTargetPoints[closestTargetIndex].y;
+          const targetAngle = Math.atan2(targetDy, targetDx);
+
+          let angleDiff = Math.abs(userAngle - targetAngle);
+          if (angleDiff > Math.PI) angleDiff = 2 * Math.PI - angleDiff;
+
+          shapeCheckCount++;
+          if (angleDiff < 1.57) {
+            shapeMatchCount++;
+          }
         }
       }
     });
@@ -272,14 +290,15 @@ export default function TracingCanvas({
     const hitCount = updatedTargetPoints.filter((p) => p.hit).length;
     const coverage = hitCount / updatedTargetPoints.length;
     const messRatio = messyPoints / totalUserPoints;
+    const shapeMatchRatio = shapeCheckCount > 0 ? shapeMatchCount / shapeCheckCount : 1;
 
-    // Debugging logs to help you fine-tune
-    console.log(`Coverage: ${(coverage * 100).toFixed(1)}% | Mess: ${(messRatio * 100).toFixed(1)}%`);
+    console.log(`Coverage: ${(coverage * 100).toFixed(1)}% | Mess: ${(messRatio * 100).toFixed(1)}% | Shape Match: ${(shapeMatchRatio * 100).toFixed(1)}%`);
 
     const isCovered = coverage >= requiredCoverage;
     const isClean = messRatio <= allowedMessRatio;
+    const isShapeCorrect = shapeMatchRatio >= requiredShapeMatch;
 
-    if (isCovered && isClean) {
+    if (isCovered && isClean && isShapeCorrect) {
       playSuccessSound();
       setShowSuccessAnimation(true);
       setCompleted(true);
@@ -289,33 +308,28 @@ export default function TracingCanvas({
       setShowFailureAnimation(true);
       setTimeout(() => setShowFailureAnimation(false), 2500);
 
-      // Feedback logic (optional)
       if (!isCovered) console.log("Try to trace the whole letter!");
       if (!isClean) console.log("Too much scribbling outside the lines!");
+      if (!isShapeCorrect) console.log("Shape doesn't match! Follow the direction.");
     }
 
     setTargetPoints(updatedTargetPoints);
   };
 
-  // Handler for the Check Button
   const checkMyTrace = () => {
     checkAccuracy(strokes);
   };
 
-  // --- DISPLAY ITEMS (No change) ---
   const getDisplayItem = () => {
     if (categoryId === "shapes") {
-      // item ko Proper Case mein format karein jaisa list mein hai
       return item.charAt(0).toUpperCase() + item.slice(1).toLowerCase();
     }
-    return item.toUpperCase(); // Baaki sab uppercase mein
+    return item.toUpperCase();
   };
 
-  // getTitle function bhi update nahi karna
   const getTitle = () => {
     if (categoryId === "letters") return "Letter";
     if (categoryId === "numbers") return "Number";
-
     if (categoryId === "shapes") return "Shape";
     return "Item";
   };
@@ -328,11 +342,9 @@ export default function TracingCanvas({
           : "border-cyan-400 border-4 shadow-xl"
           }`}
         style={{
-          /* --- Responsive Logic --- */
           aspectRatio: "300 / 330",
-          // Mobile pe 95% width, Tablet/Desktop pe max height 60% of screen
           width: "min(95%, 55vh * (300/330))",
-          maxWidth: "500px", // Desktop par had se zyada bara na ho
+          maxWidth: "500px",
           margin: "0 auto",
         }}
       >
@@ -349,40 +361,36 @@ export default function TracingCanvas({
           onTouchEnd={endDraw}
           onTouchCancel={endDraw}
         >
-          {/* 1. Dotted Path (Guide) */}
           <path
             d={currentPath}
             fill="none"
-            stroke="#67e8f9" // Cyan-300
+            stroke="#67e8f9"
             strokeWidth={5}
             strokeDasharray="6,10"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
 
-          {/* 2. Invisible Path for Measurement */}
           <path
             ref={pathRef}
             d={currentPath}
             fill="none"
             stroke="transparent"
-            strokeWidth={20} // Width 20 rakha hai takay touch area theek ho
+            strokeWidth={20}
           />
 
-          {/* 3. User's Drawn Strokes */}
           {strokes.map((s, i) => (
             <polyline
               key={i}
               points={s.map((p) => `${p.x},${p.y}`).join(" ")}
               fill="none"
-              stroke="#4F46E5" // Indigo-600
+              stroke="#4F46E5"
               strokeWidth={10}
               strokeLinecap="round"
               strokeLinejoin="round"
             />
           ))}
 
-          {/* 4. Currently Drawing Stroke */}
           {currentStroke.length > 0 && (
             <polyline
               points={currentStroke.map((p) => `${p.x},${p.y}`).join(" ")}
@@ -395,7 +403,6 @@ export default function TracingCanvas({
           )}
         </svg>
 
-        {/* --- SUCCESS/FAILURE ANIMATION OVERLAYS --- */}
         {showSuccessAnimation && (
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10 bg-white/70">
             <div className="text-3xl text-green-500 font-extrabold drop-shadow-lg animate-pop">

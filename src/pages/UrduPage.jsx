@@ -20,7 +20,7 @@ const URDU_AUDIO_MAP = {
   "ر": "raa",
   "ڑ": "rra",
   "ز": "zhey",
-  "ژ": "zhe",
+  "ژ": "ca",
   "س": "seen",
   "ش": "sheen",
   "ص": "saad",

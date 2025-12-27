@@ -1,8 +1,16 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
-export default function Navbar() {
+export default function Navbar({ backLink }) { // backLink prop add kiya
   const navigate = useNavigate();
+
+  const handleBack = () => {
+    if (backLink) {
+      navigate(backLink); // Seedha us page par jaye jo humne fix kiya hai
+    } else {
+      navigate(-1); // Default behavior
+    }
+  };
 
   return (
     <header className="w-full bg-gradient-to-r from-indigo-500 via-cyan-400 to-purple-500 shadow-lg">
@@ -10,7 +18,7 @@ export default function Navbar() {
         
         {/* Left: Back */}
         <button
-          onClick={() => navigate(-1)}
+          onClick={handleBack}
           className="bg-white/90 p-3 rounded-full shadow hover:scale-105 transition"
         >
           ⬅️
@@ -31,7 +39,6 @@ export default function Navbar() {
         >
           🏠
         </button>
-
       </div>
     </header>
   );
