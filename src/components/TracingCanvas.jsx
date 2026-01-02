@@ -229,11 +229,11 @@ export default function TracingCanvas({
     let shapeCheckCount = 0;
 
     // --- CALIBRATION SETTINGS ---
-    const hitTolerance = 20;
-    const messThreshold = 65;
-    const requiredCoverage = 0.90;
-    const allowedMessRatio = 0.10;
-    const requiredShapeMatch = 0.80;
+   const hitTolerance = 15;
+const messThreshold = 40;
+const requiredCoverage = 0.90;
+const allowedMessRatio = 0.05;
+const requiredShapeMatch = 0.90;
 
     allStrokes.forEach((stroke) => {
       for (let i = 0; i < stroke.length; i += 2) {
@@ -280,7 +280,7 @@ export default function TracingCanvas({
           if (angleDiff > Math.PI) angleDiff = 2 * Math.PI - angleDiff;
 
           shapeCheckCount++;
-          if (angleDiff < 1.57) {
+          if (angleDiff < 1.8) {
             shapeMatchCount++;
           }
         }
@@ -306,7 +306,12 @@ export default function TracingCanvas({
     } else {
       playFailureSound();
       setShowFailureAnimation(true);
-      setTimeout(() => setShowFailureAnimation(false), 2500);
+      
+      // Auto clear after 2 seconds on failure
+      setTimeout(() => {
+        setShowFailureAnimation(false);
+        resetCanvas();
+      }, 2000);
 
       if (!isCovered) console.log("Try to trace the whole letter!");
       if (!isClean) console.log("Too much scribbling outside the lines!");

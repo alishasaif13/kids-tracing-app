@@ -10,7 +10,7 @@ export default function MatchingEngine({ leftItems, rightItems }) {
   const [active, setActive] = useState(null);
   const [result, setResult] = useState(null);
 
-  // ---------- CANVAS ----------
+  /* ---------- CANVAS ---------- */
   useEffect(() => {
     const resize = () => {
       if (!canvasRef.current || !containerRef.current) return;
@@ -58,11 +58,19 @@ export default function MatchingEngine({ leftItems, rightItems }) {
     };
   };
 
-  // ---------- DRAW ----------
+  /* ---------- START FROM ANY SIDE ---------- */
   const start = (item, side, e) => {
     const dot = e.currentTarget.querySelector(".dot");
     const { x, y } = center(dot);
-    setActive({ from: item.id, side, x1: x, y1: y, x2: x, y2: y });
+
+    setActive({
+      from: item.id,
+      fromSide: side,
+      x1: x,
+      y1: y,
+      x2: x,
+      y2: y,
+    });
   };
 
   const move = (e) => {
@@ -74,8 +82,9 @@ export default function MatchingEngine({ leftItems, rightItems }) {
     draw();
   };
 
+  /* ---------- END ON OPPOSITE SIDE ---------- */
   const end = (item, side, e) => {
-    if (!active || active.side === side) {
+    if (!active || active.fromSide === side) {
       setActive(null);
       return;
     }
@@ -85,13 +94,20 @@ export default function MatchingEngine({ leftItems, rightItems }) {
 
     setLines((prev) => [
       ...prev,
-      { from: active.from, to: item.id, x1: active.x1, y1: active.y1, x2: x, y2: y },
+      {
+        from: active.fromSide === "left" ? active.from : item.id,
+        to: active.fromSide === "left" ? item.id : active.from,
+        x1: active.x1,
+        y1: active.y1,
+        x2: x,
+        y2: y,
+      },
     ]);
 
     setActive(null);
   };
 
-  // ---------- CHECK RESULT ----------
+  /* ---------- CHECK RESULT ---------- */
   const checkResult = () => {
     let usedLeft = new Set();
     let usedRight = new Set();
@@ -132,7 +148,9 @@ export default function MatchingEngine({ leftItems, rightItems }) {
               <div
                 key={i.id}
                 onMouseDown={(e) => start(i, "left", e)}
+                onMouseUp={(e) => end(i, "left", e)}
                 onTouchStart={(e) => start(i, "left", e)}
+                onTouchEnd={(e) => end(i, "left", e)}
                 className="relative bg-indigo-100 rounded-xl p-4 text-center font-black text-xl cursor-pointer"
               >
                 {i.content}
@@ -146,7 +164,9 @@ export default function MatchingEngine({ leftItems, rightItems }) {
             {rightItems.map((i) => (
               <div
                 key={i.id}
+                onMouseDown={(e) => start(i, "right", e)}
                 onMouseUp={(e) => end(i, "right", e)}
+                onTouchStart={(e) => start(i, "right", e)}
                 onTouchEnd={(e) => end(i, "right", e)}
                 className="relative bg-pink-100 rounded-xl p-4 text-center font-black text-xl cursor-pointer"
               >
@@ -158,7 +178,6 @@ export default function MatchingEngine({ leftItems, rightItems }) {
         </div>
       </div>
 
-      {/* BUTTON */}
       <button
         onClick={checkResult}
         className="mt-6 px-10 py-4 bg-green-500 text-white text-xl font-extrabold rounded-2xl shadow-lg hover:scale-105 transition"
@@ -166,7 +185,6 @@ export default function MatchingEngine({ leftItems, rightItems }) {
         Check Result
       </button>
 
-      {/* RESULT */}
       <AnimatePresence>
         {result && (
           <motion.div
