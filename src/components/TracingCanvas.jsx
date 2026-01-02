@@ -231,11 +231,12 @@ export default function TracingCanvas({
     let shapeCheckCount = 0;
 
     // --- CALIBRATION SETTINGS ---
-    const hitTolerance = 25;
-    const messThreshold = 60;
-    const requiredCoverage = 0.85;
-    const allowedMessRatio = 0.2;
-    const requiredShapeMatch = 0.7;
+   // --- STRICT TRACING SETTINGS ---
+const hitTolerance = 15;       // Dots ke liye sakht (user ko dots ke kaafi qareeb rehna hoga)
+const messThreshold = 35;      // Agar line raste se thora sa bhi bahar nikli (35px), to usay 'Mess' maana jaye
+const requiredCoverage = 0.95; // 95% coverage (Shuru se aakhir tak poora trace karna lazmi hai)
+const allowedMessRatio = 0.05; // SIRF 5% extra lines allow hain (Extra lines par foran fail karega)
+const requiredShapeMatch = 0.90; // Shape asli template se 85% milni chahiye
 
     
 
