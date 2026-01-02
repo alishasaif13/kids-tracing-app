@@ -52,7 +52,8 @@ const PATH_DATA = {
   19: "M90 55 L90 315 M235 145 C235 70 155 70 155 125 C155 175 235 175 235 145 L235 315",
   20: "M80 100 C80 55 160 55 160 130 C160 185 125 235 80 315 L170 315 M225 55 C190 55 180 110 180 185 C180 260 190 315 225 315 C260 315 270 260 270 185 C270 110 260 55 225 55 Z",
   // --- SHAPES (Enlarged and Centered to match A-Z scale) ---
-  Circle: "M160 55 C250 55 260 185 260 185 C260 315 160 315 160 315 C70 315 60 185 60 185 C60 55 160 55 160 55 Z",
+  Circle:
+    "M160 55 C250 55 260 185 260 185 C260 315 160 315 160 315 C70 315 60 185 60 185 C60 55 160 55 160 55 Z",
   Square: "M80 85 L240 85 L240 245 L80 245 Z",
   Triangle: "M160 55 L270 315 L50 315 Z",
   Star: "M160 45 L195 145 L285 145 L215 210 L240 315 L160 250 L80 315 L105 210 L35 145 L125 145 Z",
@@ -60,7 +61,8 @@ const PATH_DATA = {
   Rectangle: "M40 90 L280 90 L280 280 L40 280 Z",
   Oval: "M160 55 C230 55 230 315 160 315 C90 315 90 55 160 55 Z",
   Arrow: "M60 185 L260 185 M180 105 L260 185 L180 265",
-  Heart: "M160 315 C100 315 50 255 50 195 C50 145 90 125 125 145 C145 155 160 185 160 185 C160 185 175 155 195 145 C230 125 270 145 270 195 C270 255 220 315 160 315 Z",
+  Heart:
+    "M160 315 C100 315 50 255 50 195 C50 145 90 125 125 145 C145 155 160 185 160 185 C160 185 175 155 195 145 C230 125 270 145 270 195 C270 255 220 315 160 315 Z",
 };
 
 // --- GET PATH FUNCTION ---
@@ -229,11 +231,13 @@ export default function TracingCanvas({
     let shapeCheckCount = 0;
 
     // --- CALIBRATION SETTINGS ---
-   const hitTolerance = 15;
-const messThreshold = 40;
-const requiredCoverage = 0.90;
-const allowedMessRatio = 0.05;
-const requiredShapeMatch = 0.90;
+    const hitTolerance = 25;
+    const messThreshold = 60;
+    const requiredCoverage = 0.85;
+    const allowedMessRatio = 0.2;
+    const requiredShapeMatch = 0.7;
+
+    
 
     allStrokes.forEach((stroke) => {
       for (let i = 0; i < stroke.length; i += 2) {
@@ -264,16 +268,22 @@ const requiredShapeMatch = 0.90;
         }
 
         // --- SHAPE DIRECTION CHECK ---
-        if (i > 0 && closestTargetIndex >= 0 && closestTargetIndex < updatedTargetPoints.length - 5) {
+        if (
+          i > 0 &&
+          closestTargetIndex >= 0 &&
+          closestTargetIndex < updatedTargetPoints.length - 5
+        ) {
           const prevUserPt = stroke[i - 2] || stroke[i - 1] || userPt;
-          
+
           const userDx = userPt.x - prevUserPt.x;
           const userDy = userPt.y - prevUserPt.y;
           const userAngle = Math.atan2(userDy, userDx);
 
           const nextTargetPt = updatedTargetPoints[closestTargetIndex + 5];
-          const targetDx = nextTargetPt.x - updatedTargetPoints[closestTargetIndex].x;
-          const targetDy = nextTargetPt.y - updatedTargetPoints[closestTargetIndex].y;
+          const targetDx =
+            nextTargetPt.x - updatedTargetPoints[closestTargetIndex].x;
+          const targetDy =
+            nextTargetPt.y - updatedTargetPoints[closestTargetIndex].y;
           const targetAngle = Math.atan2(targetDy, targetDx);
 
           let angleDiff = Math.abs(userAngle - targetAngle);
@@ -290,9 +300,14 @@ const requiredShapeMatch = 0.90;
     const hitCount = updatedTargetPoints.filter((p) => p.hit).length;
     const coverage = hitCount / updatedTargetPoints.length;
     const messRatio = messyPoints / totalUserPoints;
-    const shapeMatchRatio = shapeCheckCount > 0 ? shapeMatchCount / shapeCheckCount : 1;
+    const shapeMatchRatio =
+      shapeCheckCount > 0 ? shapeMatchCount / shapeCheckCount : 1;
 
-    console.log(`Coverage: ${(coverage * 100).toFixed(1)}% | Mess: ${(messRatio * 100).toFixed(1)}% | Shape Match: ${(shapeMatchRatio * 100).toFixed(1)}%`);
+    console.log(
+      `Coverage: ${(coverage * 100).toFixed(1)}% | Mess: ${(
+        messRatio * 100
+      ).toFixed(1)}% | Shape Match: ${(shapeMatchRatio * 100).toFixed(1)}%`
+    );
 
     const isCovered = coverage >= requiredCoverage;
     const isClean = messRatio <= allowedMessRatio;
@@ -306,7 +321,7 @@ const requiredShapeMatch = 0.90;
     } else {
       playFailureSound();
       setShowFailureAnimation(true);
-      
+
       // Auto clear after 2 seconds on failure
       setTimeout(() => {
         setShowFailureAnimation(false);
@@ -315,7 +330,8 @@ const requiredShapeMatch = 0.90;
 
       if (!isCovered) console.log("Try to trace the whole letter!");
       if (!isClean) console.log("Too much scribbling outside the lines!");
-      if (!isShapeCorrect) console.log("Shape doesn't match! Follow the direction.");
+      if (!isShapeCorrect)
+        console.log("Shape doesn't match! Follow the direction.");
     }
 
     setTargetPoints(updatedTargetPoints);
@@ -342,10 +358,11 @@ const requiredShapeMatch = 0.90;
   return (
     <div className="w-full px-4 sm:px-6 md:px-10 mx-auto flex flex-col items-center">
       <div
-        className={`relative w-full mx-auto bg-white/90 rounded-3xl overflow-hidden transition-all duration-300 ${completed
-          ? "border-green-500 shadow-[0_0_20px_rgba(34,197,94,0.4)] border-8"
-          : "border-cyan-400 border-4 shadow-xl"
-          }`}
+        className={`relative w-full mx-auto bg-white/90 rounded-3xl overflow-hidden transition-all duration-300 ${
+          completed
+            ? "border-green-500 shadow-[0_0_20px_rgba(34,197,94,0.4)] border-8"
+            : "border-cyan-400 border-4 shadow-xl"
+        }`}
         style={{
           aspectRatio: "300 / 330",
           width: "min(95%, 55vh * (300/330))",
